@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "Dashboard",
+    "path": "/dashboard",
+    "isSubMenu": false,
+    "icon": "https://img.icons8.com/?size=100&id=6AGHyLA8bTw4&format=png&color=000000"
+  },
+  {
+    "id": 2,
+    "title": "Hotels",
+    "path": "/hotels",
+    "isSubMenu": false,
+    "icon": "https://img.icons8.com/?size=100&id=17827&format=png&color=000000"
+  },
+  {
+    "id": 3,
+    "title": "Transaction",
+    "path": "/transactions",
+    "isSubMenu": false,
+    "icon": "https://img.icons8.com/?size=100&id=92225&format=png&color=000000"
+  },
+  {
+    "id": 4,
+    "title": "Room Book",
+    "isSubMenu": false,
+    "path": "/room-book",
+    "icon": "https://img.icons8.com/?size=100&id=4027&format=png&color=000000"
+  },
+  {
+        "id": 41,
+        "title": "Booking List",
+        "path": "/booking-list",
+        "icon": "https://img.icons8.com/?size=100&id=47783&format=png&color=000000"
+  },
+  {
+    "id": 5,
+    "title": "Reports",
+    "isSubMenu": true,
+    "icon": "https://img.icons8.com/?size=100&id=122066&format=png&color=000000",
+    "subMenu": [
+      {
+        "id": 51,
+        "title": "Booking Reports",
+        "path": "/booking",
+        "icon": ""
+      },
+      {
+        "id": 52,
+        "title": "Purchase Reports",
+        "path": "/purchase",
+        "icon": ""
+      },
+      {
+        "id": 53,
+        "title": "Stock Reports",
+        "path": "/stock",
+        "icon": ""
+      }
+    ]
+  }
+]
