@@ -31,6 +31,7 @@
         "id": 41,
         "title": "Booking List",
         "path": "/booking-list",
+         "isSubMenu": false,
         "icon": "https://img.icons8.com/?size=100&id=47783&format=png&color=000000"
   },
   {

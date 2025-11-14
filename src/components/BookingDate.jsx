@@ -1,104 +1,260 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css'; // Essential CSS
-import { FaCalendarAlt, FaAngleDown, FaBook, FaInfinity, FaRegBookmark } from 'react-icons/fa';
-import { FaCalendarCheck, FaCalendarXmark, FaCalendarDays } from 'react-icons/fa6'; // Using FaCalendarDays for the new field
+// import React from "react";
+// import DatePicker from "react-datepicker";
+// import "react-datepicker/dist/react-datepicker.css";
+// import { FaAngleDown, FaBook, FaCalendarAlt, FaCalendarCheck, FaInfinity, FaRegBookmark } from "react-icons/fa";
+// import { FaCalendarDays, FaCalendarXmark } from "react-icons/fa6";
 
 
- // Common styling for the input fields
-  const inputClasses =
-    "w-full p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm";
-  const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
+// const inputClasses =
+//   "w-full p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm";
+// const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
 
-  // Custom Input for DatePicker to match the design
-  const CustomDateInput = React.forwardRef(
-    ({ value, onClick, placeholder, icon: Icon }, ref) => (
-      <div className="relative">
-        <input
-          type="text"
-          className={inputClasses + " pl-10 cursor-pointer"}
-          onClick={onClick}
-          value={value || placeholder}
-          readOnly
-          ref={ref}
-        />
-        <span className="absolute left-0 top-0 h-full flex items-center pl-3 pointer-events-none text-gray-400">
-          {Icon && <Icon className="w-4 h-4" />}
-        </span>
-        <span className="absolute right-0 top-0 h-full flex items-center pr-3 pointer-events-none text-gray-400">
-          <FaCalendarAlt className="w-4 h-4" />
-        </span>
-      </div>
-    )
-);
-  
-const BookingDate = ({dates, setDates}) => {
-  // State for the date pickers
-  const [checkInDate, setCheckInDate] = useState(null);
-  const [checkOutDate, setCheckOutDate] = useState(null);
-  const [bookingDate, setBookingDate] = useState(new Date());
-  const [bookingType, setBookingType] = useState("");
-  const [bookingReference, setBookingReference] = useState("");
-  const [purposeOfVisit, setPurposeOfVisit] = useState("");
-  const [remarks, setRemarks] = useState("");
+// const CustomDateInput = React.forwardRef(
+//   ({ value, onClick, placeholder, icon: Icon }, ref) => (
+//     <div className="relative">
+//       <input
+//         type="text"
+//         className={inputClasses + " pl-10 cursor-pointer"}
+//         onClick={onClick}
+//         value={value || ""}
+//         readOnly
+//         ref={ref}
+//         placeholder={placeholder}
+//       />
+//       <span className="absolute left-0 top-0 h-full flex items-center pl-3 pointer-events-none text-gray-400">
+//         {Icon && <Icon className="w-4 h-4" />}
+//       </span>
+//       <span className="absolute right-0 top-0 h-full flex items-center pr-3 pointer-events-none text-gray-400">
+//         <FaCalendarAlt className="w-4 h-4" />
+//       </span>
+//     </div>
+//   )
+// );
 
-  // Debounced update function
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setDates({
-        checkInDate,
-        checkOutDate,
-        bookingDate,
-        bookingType,
-        bookingReference, // value comes from local state set via setBookingReference
-        purposeOfVisit,
-        remarks,
-      });
-    }, 300); // debounce delay
+// // const FieldWrapper = ({ label, children, required = false }) => (
+// //   <div className="flex-1 min-w-[180px]">
+// //     <label className={labelClasses}>
+// //       {label} {required && <span className="text-red-500">*</span>}
+// //     </label>
+// //     {children}
+// //   </div>
+// // );
+// const FieldWrapper = ({ label, name, children, required = false }) => (
+//   <div
+//     className="flex-1 min-w-[180px]"
+//     data-name={name}
+//     data-required={required}
+//   >
+//     <label className={labelClasses}>
+//       {label} {required && <span className="text-red-500">*</span>}
+//     </label>
+//     {children}
+//   </div>
+// );
 
-    return () => clearTimeout(id);
-  }, [
-    checkInDate,
-    checkOutDate,
-    bookingDate,
-    bookingType,
-    bookingReference,
-    purposeOfVisit,
-    remarks,
-    setDates,
-  ]);
 
- 
+// const BookingDate = ({ dates, setDates }) => {
+//   const handleChange = (key, value) => {
+//     setDates({ ...dates, [key]: value });
+//   };
 
-  // Reusable Field Wrapper
-  const FieldWrapper = ({ label, children, required = false }) => (
-    <div className="flex-1 min-w-[180px]">
-      {" "}
-      {/* Adjusted for horizontal spacing */}
-      <label className={labelClasses}>
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
+
+
+//   return (
+//     <div className="p-6 bg-white rounded-lg shadow-xl max-w-4xl mx-auto my-10 space-y-6">
+//       <h2 className="text-xl font-semibold text-gray-800 mb-6">
+//         Reservation Details
+//       </h2>
+
+//       {/* Dates Row */}
+//       <div className="flex flex-col sm:flex-row gap-6">
+//         <FieldWrapper label="Check In" required>
+//           <DatePicker
+//             selected={dates.checkInDate || null}
+//             onChange={(date) => handleChange("checkInDate", date)}
+//             dateFormat="dd/MM/yyyy"
+//             placeholderText="dd/mm/yyyy"
+//             required
+//             customInput={
+//               <CustomDateInput
+//                 placeholder="dd/mm/yyyy"
+//                 icon={FaCalendarCheck}
+//               />
+//             }
+//             isClearable
+//           />
+//         </FieldWrapper>
+
+//         <FieldWrapper label="Check Out" required>
+//           <DatePicker
+//             selected={dates.checkOutDate || null}
+//             onChange={(date) => handleChange("checkOutDate", date)}
+//             dateFormat="dd/MM/yyyy"
+//             placeholderText="dd/mm/yyyy"
+//             required
+//             customInput={
+//               <CustomDateInput
+//                 placeholder="dd/mm/yyyy"
+//                 icon={FaCalendarXmark}
+//               />
+//             }
+//             isClearable
+//           />
+//         </FieldWrapper>
+
+//         <FieldWrapper label="Booking Date">
+//           <DatePicker
+//             selected={ new Date()}
+//             onChange={(date) => handleChange("bookingDate", date)}
+//             dateFormat="dd/MM/yyyy"
+//             placeholderText="dd/mm/yyyy"
+//             customInput={
+//               <CustomDateInput placeholder="dd/mm/yyyy" icon={FaCalendarDays} />
+//             }
+//             isClearable
+//           />
+//         </FieldWrapper>
+//       </div>
+
+//       {/* Booking Type, Reference, Purpose */}
+//       <div className="grid md:grid-cols-3 gap-6">
+//         <FieldWrapper label="Booking Type">
+//           <div className="relative">
+//             <select
+//               className={inputClasses + " pl-10 appearance-none"}
+//               value={dates.bookingType || ""}
+//               onChange={(e) => handleChange("bookingType", e.target.value)}
+//             >
+//               <option value="" disabled>
+//                 Choose Booking Type
+//               </option>
+//               <option value="online">Online</option>
+//               <option value="call">Call</option>
+//               <option value="event">Event</option>
+//               <option value="walkin">Walk-In</option>
+//             </select>
+//             <FaBook className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+//             <FaAngleDown className="absolute right-0 top-0 h-full w-4 mr-3 text-gray-400 pointer-events-none" />
+//           </div>
+//         </FieldWrapper>
+
+//         <FieldWrapper label="Booking Reference No">
+//           <div className="relative">
+//             <input
+//               type="text"
+//               placeholder="Booking Reference No."
+//               value={dates.bookingReference || ""}
+//               onChange={(e) => handleChange("bookingReference", e.target.value)}
+//               className={inputClasses + " pl-10"}
+//             />
+//             <FaRegBookmark className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+//           </div>
+//         </FieldWrapper>
+
+//         <FieldWrapper label="Purpose of Visit">
+//           <div className="relative">
+//             <input
+//               type="text"
+//               placeholder="Purpose of Visit"
+//               value={dates.purposeOfVisit || ""}
+//               onChange={(e) => handleChange("purposeOfVisit", e.target.value)}
+//               className={inputClasses + " pl-10"}
+//             />
+//             <FaInfinity className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+//           </div>
+//         </FieldWrapper>
+//       </div>
+
+//       {/* Remarks */}
+//       <div>
+//         <label className={labelClasses}>Remarks</label>
+//         <div className="relative">
+//           <textarea
+//             placeholder="Remarks"
+//             rows="3"
+//             value={dates.remarks || ""}
+//             onChange={(e) => handleChange("remarks", e.target.value)}
+//             className={inputClasses + " pl-10 resize-none"}
+//           />
+//           <FaRegBookmark className="absolute left-0 top-3 w-4 ml-3 text-gray-400 pointer-events-none" />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default BookingDate;
+
+import React from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import {
+  FaAngleDown,
+  FaBook,
+  FaCalendarAlt,
+  FaCalendarCheck,
+  FaInfinity,
+  FaRegBookmark,
+} from "react-icons/fa";
+import { FaCalendarDays, FaCalendarXmark } from "react-icons/fa6";
+
+const inputClasses =
+  "w-full p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm";
+const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
+
+const CustomDateInput = React.forwardRef(
+  ({ value, onClick, placeholder, icon: Icon }, ref) => (
+    <div className="relative">
+      <input
+        type="text"
+        className={inputClasses + " pl-10 cursor-pointer"}
+        onClick={onClick}
+        value={value || ""}
+        readOnly
+        ref={ref}
+        placeholder={placeholder}
+      />
+      <span className="absolute left-0 top-0 h-full flex items-center pl-3 pointer-events-none text-gray-400">
+        {Icon && <Icon className="w-4 h-4" />}
+      </span>
+      <span className="absolute right-0 top-0 h-full flex items-center pr-3 pointer-events-none text-gray-400">
+        <FaCalendarAlt className="w-4 h-4" />
+      </span>
     </div>
-  );
+  )
+);
+
+const FieldWrapper = ({ label, name, children, required = false }) => (
+  <div
+    className="flex-1 min-w-[180px]"
+    data-name={name}
+    data-required={required}
+  >
+    <label className={labelClasses}>
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const BookingDate = ({ dates, setDates }) => {
+  const handleChange = (key, value) => {
+    setDates({ ...dates, [key]: value });
+  };
 
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      className="p-6 bg-white rounded-lg shadow-xl max-w-4xl mx-auto my-10"
-    >
-      {/* Header */}
+    <div className="p-6 bg-white rounded-lg shadow-xl max-w-4xl mx-auto my-10 space-y-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
         Reservation Details
       </h2>
 
-      {/* Top Row: Check In, Check Out, Booking Date */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-6">
-        {/* 1. Check In Date */}
-        <FieldWrapper label="Check In" required={true}>
+      {/* Dates Row */}
+      <div className="flex flex-col sm:flex-row gap-6">
+        {/* Check-in */}
+        <FieldWrapper label="Check In" name="checkInDate" required>
           <DatePicker
-            selected={checkInDate}
-            onChange={(date) => setCheckInDate(date)}
+            selected={dates.checkInDate || null}
+            onChange={(date) => handleChange("checkInDate", date)}
             dateFormat="dd/MM/yyyy"
             placeholderText="dd/mm/yyyy"
             customInput={
@@ -109,13 +265,25 @@ const BookingDate = ({dates, setDates}) => {
             }
             isClearable
           />
+          {/* REAL INPUT FOR VALIDATION */}
+          <input
+            type="date"
+            required
+            hidden
+            value={
+              dates.checkInDate
+                ? dates.checkInDate.toISOString().split("T")[0]
+                : ""
+            }
+            onChange={() => {}}
+          />
         </FieldWrapper>
 
-        {/* 2. Check Out Date */}
-        <FieldWrapper label="Check Out" required={true}>
+        {/* Check-out */}
+        <FieldWrapper label="Check Out" name="checkOutDate" required>
           <DatePicker
-            selected={checkOutDate}
-            onChange={(date) => setCheckOutDate(date)}
+            selected={dates.checkOutDate || null}
+            onChange={(date) => handleChange("checkOutDate", date)}
             dateFormat="dd/MM/yyyy"
             placeholderText="dd/mm/yyyy"
             customInput={
@@ -126,13 +294,25 @@ const BookingDate = ({dates, setDates}) => {
             }
             isClearable
           />
+          {/* REAL INPUT FOR VALIDATION */}
+          <input
+            type="date"
+            required
+            hidden
+            value={
+              dates.checkOutDate
+                ? dates.checkOutDate.toISOString().split("T")[0]
+                : ""
+            }
+            onChange={() => {}}
+          />
         </FieldWrapper>
 
-        {/* 3. Booking Date ( defaults to today) */}
-        <FieldWrapper label="Booking Date" required={false}>
+        {/* Booking Date */}
+        <FieldWrapper label="Booking Date" name="bookingDate">
           <DatePicker
-            selected={bookingDate}
-            onChange={(date) => setBookingDate(date)}
+            selected={dates.bookingDate || new Date()}
+            onChange={(date) => handleChange("bookingDate", date)}
             dateFormat="dd/MM/yyyy"
             placeholderText="dd/mm/yyyy"
             customInput={
@@ -143,18 +323,17 @@ const BookingDate = ({dates, setDates}) => {
         </FieldWrapper>
       </div>
 
-      {/* Second Row: Booking Type, Booking Reference No, Purpose of Visit */}
+      {/* Booking Type, Reference No, Purpose */}
       <div className="grid md:grid-cols-3 gap-6">
-        {/* 4. Booking Type */}
-        <FieldWrapper label="Booking Type">
+        <FieldWrapper label="Booking Type" name="bookingType">
           <div className="relative">
             <select
               className={inputClasses + " pl-10 appearance-none"}
-              value={bookingType}
-              onChange={(e) => setBookingType(e.target.value)}
+              value={dates.bookingType || ""}
+              onChange={(e) => handleChange("bookingType", e.target.value)}
             >
               <option value="" disabled>
-                Choose Booking Reference
+                Choose Booking Type
               </option>
               <option value="online">Online</option>
               <option value="call">Call</option>
@@ -166,28 +345,26 @@ const BookingDate = ({dates, setDates}) => {
           </div>
         </FieldWrapper>
 
-        {/* 5. Booking Reference No */}
         <FieldWrapper label="Booking Reference No">
           <div className="relative">
             <input
               type="text"
               placeholder="Booking Reference No."
-              value={bookingReference}
-              onChange={(e) => setBookingReference(e.target.value)}
+              value={dates.bookingReference || ""}
+              onChange={(e) => handleChange("bookingReference", e.target.value)}
               className={inputClasses + " pl-10"}
             />
             <FaRegBookmark className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
           </div>
         </FieldWrapper>
 
-        {/* 6. Purpose of Visit */}
-        <FieldWrapper label="Purpose of Visit (if have any)">
+        <FieldWrapper label="Purpose of Visit">
           <div className="relative">
             <input
               type="text"
               placeholder="Purpose of Visit"
-              value={purposeOfVisit}
-              onChange={(e) => setPurposeOfVisit(e.target.value)}
+              value={dates.purposeOfVisit || ""}
+              onChange={(e) => handleChange("purposeOfVisit", e.target.value)}
               className={inputClasses + " pl-10"}
             />
             <FaInfinity className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
@@ -195,21 +372,21 @@ const BookingDate = ({dates, setDates}) => {
         </FieldWrapper>
       </div>
 
-      {/* 7. Remarks (Full Width) */}
-      <div className="mt-6">
+      {/* Remarks */}
+      <div>
         <label className={labelClasses}>Remarks</label>
         <div className="relative">
           <textarea
             placeholder="Remarks"
             rows="3"
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
+            value={dates.remarks || ""}
+            onChange={(e) => handleChange("remarks", e.target.value)}
             className={inputClasses + " pl-10 resize-none"}
-          ></textarea>
+          />
           <FaRegBookmark className="absolute left-0 top-3 w-4 ml-3 text-gray-400 pointer-events-none" />
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 

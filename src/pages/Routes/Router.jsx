@@ -2,16 +2,16 @@ import { createBrowserRouter } from "react-router";
 import Dashboard from "../Dashboard/Dashboard";
 import Root from "../Root/Root";
 import BookingList from "../Booking/BookingList";
-import Home from "../Home";
+import Home from "../Home/Home";
 import RoomBook from "../Booking/BookingForm";
 import BookingForm2 from "../Booking/BookingForm2";
 import BookingForm from "../Booking/BookingForm";
+import BookingInfo from "../Booking/BookingInfo";
+import UpdateBooking from "../Booking/UpdateBooking";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    id: 'root',
-    loader: () => fetch('menu.json'),
     Component: Root,
     children: [
       {
@@ -21,7 +21,6 @@ export const router = createBrowserRouter([
       },
       {
         path: '/booking-list',
-        loader: ()=>fetch('http://localhost:5000/users').then(res=>res.json()),
         Component: BookingList,
       },
       {
@@ -31,6 +30,14 @@ export const router = createBrowserRouter([
       {
         path: 'room-book',
         Component: BookingForm,
+      },
+      {
+        path: '/booking-info/:id',
+        Component: BookingInfo
+      },
+      {
+        path: '/update-booking/:id',
+        Component: UpdateBooking
       }
     ]
   },

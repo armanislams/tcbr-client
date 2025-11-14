@@ -7,7 +7,7 @@ const Navbar = ({handleToggleCollapsed}) => {
     return (
       <div className="navbar z-40 relative">
   <div className="navbar bg-base-100 shadow-sm">
-  <div className="navbar-start flex justify-items-start gap-5 px-5 items-center ">
+  <div className="navbar-start flex justify-items-start gap-5 lg:px-5 items-center ">
    <button className='btn border-none drawer-button' onClick={handleToggleCollapsed}> <label htmlFor="my-drawer-3" className=" drawer-button">
     <FaAlignJustify/>
     </label></button>

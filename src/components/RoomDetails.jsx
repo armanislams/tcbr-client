@@ -4,7 +4,6 @@ import { FaHome, FaAngleDown, FaUsers, FaUser, FaPlus, FaTimes } from 'react-ico
 const RoomDetails = ({ roomDetails, setRoomDetails }) => {
   // --- Room State Logic ---
   const newRoom = () => ({
-    id: Date.now().toString() + Math.random().toString(36).slice(2),
     roomType: "",
     roomNo: "",
     adults: 0,
@@ -95,7 +94,7 @@ const RoomDetails = ({ roomDetails, setRoomDetails }) => {
       <div className="rooms-container space-y-6" data-repeatable>
         {rooms.map((room, index) => (
           <div
-            key={room.id}
+            key={index}
             className="room-item p-6 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
           >
             {/* Room Header and Actions */}
@@ -140,6 +139,7 @@ const RoomDetails = ({ roomDetails, setRoomDetails }) => {
                 className="flex flex-col flex-1 min-w-[150px]"
               >
                 <select
+                  required
                   className={inputClasses + " pl-10 appearance-none"}
                   value={room.roomType}
                   onChange={(e) =>
@@ -148,7 +148,10 @@ const RoomDetails = ({ roomDetails, setRoomDetails }) => {
                 >
                   <option value="">Choose Room Type</option>
                   <option value="Sea View Villa">Sea View Villa</option>
+                  <option value="HillSide Villa">HillSide Villa</option>
                   <option value="BeachFront Deluxe">BeachFront Deluxe</option>
+                  <option value="BeachFront Chalet">BeachFront Chalet</option>
+                  <option value="BayView Chalet">BayView Chalet</option>
                   <option value="Standard Room">Standard Room</option>
                   {/* Add other options */}
                 </select>
@@ -163,6 +166,7 @@ const RoomDetails = ({ roomDetails, setRoomDetails }) => {
                 className="flex flex-col flex-1 min-w-[120px]"
               >
                 <select
+                  required
                   className={inputClasses + " pl-10 appearance-none"}
                   value={room.roomNo}
                   onChange={(e) =>
@@ -187,40 +191,47 @@ const RoomDetails = ({ roomDetails, setRoomDetails }) => {
               </FieldWithIcon>
 
               {/* 3. Adults Counter */}
-              <FieldWithIcon label="Adults" className="flex flex-col w-20">
-                <input
-                  type="number"
-                  value={room.adults}
-                  onChange={(e) =>
-                    updateRoom(
-                      room.id,
-                      "adults",
-                      Math.max(0, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  className={inputClasses + " pl-10"}
-                  min="0"
-                />
-                <FaUsers className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
-              </FieldWithIcon>
+              <div className='flex gap-5'>
+                <FieldWithIcon
+                  label="Adults"
+                  className="flex flex-col lg:w-20"
+                  required
+                >
+                  <input
+                    type="number"
+                    required
+                    value={room.adults}
+                    onChange={(e) =>
+                      updateRoom(
+                        room.id,
+                        "adults",
+                        Math.max(0, parseInt(e.target.value) || 0)
+                      )
+                    }
+                    className={inputClasses + " pl-10"}
+                    min="0"
+                  />
+                  <FaUsers className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+                </FieldWithIcon>
 
-              {/* 4. Children Counter */}
-              <FieldWithIcon label="Children" className="flex flex-col w-20">
-                <input
-                  type="number"
-                  value={room.children}
-                  onChange={(e) =>
-                    updateRoom(
-                      room.id,
-                      "children",
-                      Math.max(0, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  className={inputClasses + " pl-10"}
-                  min="0"
-                />
-                <FaUser className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
-              </FieldWithIcon>
+                {/* 4. Children Counter */}
+                <FieldWithIcon label="Children" className="flex flex-col lg:w-20">
+                  <input
+                    type="number"
+                    value={room.children}
+                    onChange={(e) =>
+                      updateRoom(
+                        room.id,
+                        "children",
+                        Math.max(0, parseInt(e.target.value) || 0)
+                      )
+                    }
+                    className={inputClasses + " pl-10"}
+                    min="0"
+                  />
+                  <FaUser className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+                </FieldWithIcon>
+              </div>
             </div>
           </div>
         ))}
