@@ -1,16 +1,148 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# 🏨 Hotel Booking Management System for
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A complete hotel booking management system built using React, Express.js, and MongoDB.
+This project allows hotel staff to manage room bookings, customer details, payments, check-in/out dates, extra charges, and more — all through a clean and responsive UI.
 
-## React Compiler
+## 🚀 Features
+✅ Booking Management
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Create new bookings
 
-## Expanding the ESLint configuration
+Update existing bookings
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Auto-calculate payable amounts
+
+Add dynamic extra charges
+
+Validate required fields
+
+- 🧾 Customer Details
+
+Collect customer info (name, phone, nationality, etc.)
+
+Store and update data cleanly in MongoDB
+
+- 🏠 Layout
+
+Responsive sidebar with auto-collapse on small screens
+
+Full admin layout using Navbar, Sidebar, and Outlet
+
+Toast notifications for all actions
+
+- 💳 Payment Tracking
+
+Paid & Due amounts
+
+Payment status (Paid / Partial / Unpaid)
+
+Editable during update
+
+- 📆 Booking Dates
+
+Manage check-in/check-out date
+
+Validation & conflict handling
+
+Dynamic extra charges module
+
+
+## 🛠️ Tech Stack
+- Frontend
+
+React
+
+React Router
+
+TailwindCSS
+
+React Icons
+
+React Toastify
+
+- Backend
+
+Node.js / Express.js
+
+MongoDB (with native driver)
+
+
+## ⚙️ Backend API Routes
+POST /create-booking
+
+Creates a new booking.
+
+GET /bookings
+
+Fetches all bookings.
+
+PATCH /course/:id
+
+Updates an existing booking:
+
+DELETE /booking/:id
+
+Deletes a booking.
+
+## 🧩 Key Components
+BookingForm
+
+Handles multi-section input
+
+Uses reusable <FieldWrapper />
+
+Dynamic extra charges
+
+Automatic resetting using formRef.reset()
+
+UpdateBooking
+
+Shares the same UI as BookingForm
+
+Pre-fills all existing data
+
+Sends patch request to server
+
+Sidebar
+
+Expands on desktop
+
+Automatically collapses on mobile
+
+##📌 To-Do (Future Enhancements)
+
+Role-based authentication (Admin / Staff)
+
+Room availability calendar
+
+PDF invoice generation
+
+Dashboard with charts
+
+Dark mode UI
+
+Online payment integration
+## Installation
+
+Install project with npm
+
+git clone <your-repo-url>
+cd tcbr-client
+
+## Install dependencies
+npm install
+npm run dev
+
+
+## 🧑‍💻 Author
+
+Arman Islam
+Built with ❤️ and React.
+
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
