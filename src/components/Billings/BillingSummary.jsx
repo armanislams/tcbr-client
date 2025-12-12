@@ -88,7 +88,6 @@ const BillingSummary = ({
     serviceCharge,
     finalTotal,
     commissionAmount,
-    balanceDue,
   } = calculatedBillings;
 
   // Sum of extra charges

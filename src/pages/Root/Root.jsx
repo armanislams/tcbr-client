@@ -1,52 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Navbar from '../../components/Header/Navbar';
 import Sidebar from '../../components/Layout/Sidebar/Sidebar';
-import { Outlet, useLocation } from 'react-router';
+import { Outlet } from 'react-router';
 import { ToastContainer } from 'react-toastify';
 
 const Root = () => {
-    const [collapsed, setCollapsed] = useState(false);
-    const location = useLocation()
-  // Auto collapse sidebar on small screens
-  useEffect(() => {
-    const handleResponsiveSidebar = () => {
-      // Always collapse on mobile
-      if (window.innerWidth < 768) {
-        setCollapsed(true);
-      }
-      // Always expand on desktop
-      else {
-        setCollapsed(false);
-      }
-    };
-
-    // Run when mounted
-    handleResponsiveSidebar();
-
-    // Listen for screen resize
-    window.addEventListener("resize", handleResponsiveSidebar);
-
-    // Cleanup
-    return () => window.removeEventListener("resize", handleResponsiveSidebar);
-
-    // Also re-run on route change
-  }, [location.pathname]);
-
-  const handleToggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
   return (
-    <div className="flex bg-gray-100">
-      <div className="sticky top-0 h-fit">
-        <Sidebar collapsed={collapsed}></Sidebar>
-      </div>
-      <div className="lg:w-[100vw] ">
-        <Navbar handleToggleCollapsed={handleToggleCollapsed}></Navbar>
-        <main className="pt-4">
+    <div className="drawer lg:drawer-open">
+      <input id="main-drawer" type="checkbox" className="drawer-toggle" />
+
+      {/* Page Content */}
+      <div className="drawer-content flex flex-col min-h-screen bg-base-200">
+        <Navbar />
+        <main className="flex-1 p-6">
           <Outlet />
         </main>
       </div>
-      <ToastContainer></ToastContainer>
+
+      {/* Sidebar */}
+      <div className="drawer-side z-50">
+        <label htmlFor="main-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+        <Sidebar />
+      </div>
+
+      <ToastContainer />
     </div>
   );
 };

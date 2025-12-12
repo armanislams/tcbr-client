@@ -1,109 +1,61 @@
-
-import React, { useContext, useEffect, useState } from "react";
+import React from "react";
 import { NavLink } from "react-router";
-import useAxios from "../../hooks/useAxios";
-import { AuthContext } from "../../../Provider/AuthContext";
+import { FaThLarge, FaList, FaPlusCircle, FaHome } from "react-icons/fa";
 
-const Sidebar = ({ collapsed }) => {
-  const { loading, setLoading } = useContext(AuthContext);
-  const [menus, setMenus] = useState([]);
-  const AxiosInstance = useAxios();
-
-  const [openMenuId, setOpenMenuId] = useState(null);
-
-  // Fetch menus only once
-  useEffect(() => {
-    const fetchMenus = async () => {
-      try {
-        setLoading(true);
-        const res = await AxiosInstance.get("menus");
-        setMenus(res.data);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMenus();
-  }, []); // IMPORTANT: empty dependency
-
-  const handleToggle = (id) => {
-    setOpenMenuId(openMenuId === id ? null : id);
-  };
-
-  if (loading) return <h1 className="text-2xl">Loading..</h1>;
+const Sidebar = () => {
+  const menuItems = [
+    { title: "Dashboard", path: "/dashboard", icon: <FaThLarge /> },
+    { title: "Booking List", path: "/booking-list", icon: <FaList /> },
+    { title: "New Booking", path: "/room-book", icon: <FaPlusCircle /> },
+    { title: "Home", path: "/", icon: <FaHome /> },
+  ];
 
   return (
-    <div
-      className={`drawer drawer-open overflow-visible transition-all ease-in-out ${
-        collapsed ? "hidden" : "md:fixed inset-0 z-40"
-      } md:relative md:inset-auto md:z-auto `}
-    >
-      <input id="my-drawer-1" type="checkbox" className="drawer-toggle" />
+    <div className="min-h-full bg-base-200 text-base-content w-80 p-4">
+      {/* Sidebar Header / Brand - optionally redundant if Navbar has it, but good for mobile drawer context */}
+      <div className="mb-8 px-4 py-2">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <span className="text-primary">TCBR</span> Manager
+        </h1>
+        <p className="text-xs text-gray-500 mt-1">v1.0.0</p>
+      </div>
 
-      <div className="drawer-side">
-        <label htmlFor="my-drawer-1" className="drawer-overlay"></label>
+      <ul className="menu text-base-content space-y-2">
+        {menuItems.map((item, index) => (
+          <li key={index}>
+            <NavLink
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive
+                  ? "bg-primary text-primary-content font-semibold shadow-md active"
+                  : "hover:bg-base-300"
+                }`
+              }
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span>{item.title}</span>
+            </NavLink>
+          </li>
+        ))}
+      </ul>
 
-        <ul className="menu bg-base-200 min-h-full w-60 p-4 py-10 space-y-10">
-          <div className="flex flex-col justify-center items-center py-5">
-            <h1>users</h1>
-            <p>user role</p>
+      {/* Optional User Info at Bottom */}
+      <div className="absolute bottom-10 left-0 w-full px-4">
+        <div className="divider"></div>
+        <div className="flex items-center gap-3 px-4">
+          <div className="avatar placeholder">
+            <div className="bg-neutral text-neutral-content rounded-full w-8">
+              <span className="text-xs">UI</span>
+            </div>
           </div>
-
-          <nav className="flex flex-col space-y-5 w-full px-2">
-            {menus.map((m) => {
-              const isOpen = openMenuId === m._id;
-
-              return (
-                <div key={m._id} className="w-full text-xl">
-                  {m.isSubMenu ? (
-                    <div className="w-full">
-                      <div className="flex items-center px-5 py-2 gap-2 hover:bg-amber-400 rounded-lg">
-                        <img className="w-1/10" src={m.icon} alt="" />
-
-                        <button
-                          className="flex justify-center items-center"
-                          onClick={() => handleToggle(m._id)}
-                        >
-                          <span className="mr-2">{m.title}</span>
-                          <span className="ml-auto">{isOpen ? "▲" : "▼"}</span>
-                        </button>
-                      </div>
-
-                      <div
-                        className={`overflow-hidden transition-all duration-300 ${
-                          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                        }`}
-                      >
-                        <div className="pl-4 pt-2 space-y-5 flex flex-col">
-                          {m.subMenu.map((sub) => (
-                            <NavLink
-                              className="hover:bg-amber-400 rounded-lg p-2"
-                              key={sub.id}
-                              to={sub.path}
-                            >
-                              {sub.title}
-                            </NavLink>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <NavLink
-                      className="flex gap-5 items-center hover:bg-amber-400 rounded-lg px-5 py-2"
-                      to={m.path}
-                    >
-                      <img className="w-1/10" src={m.icon} alt="" />
-                      {m.title}
-                    </NavLink>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-        </ul>
+          <div>
+            <p className="font-bold text-sm">Admin User</p>
+            <p className="text-xs opacity-70">admin@tcbr.com</p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default React.memo(Sidebar);
+export default Sidebar;
