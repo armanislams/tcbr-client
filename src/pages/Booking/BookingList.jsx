@@ -127,7 +127,7 @@ const BookingList = () => {
               <thead className="bg-base-200">
                 <tr>
                   <th>Customer</th>
-                  <th>Room Info</th>
+                  {/* <th>Room Info</th> */}
                   <th>Dates</th>
                   <th>Financials</th>
                   <th>Status</th>
@@ -193,7 +193,7 @@ const BookingList = () => {
                           </td>
 
                           {/* Room Info */}
-                          <td>
+                          {/* <td>
                             <span className="badge badge-ghost badge-sm font-semibold">
                               {booking.roomDetails?.[0]?.roomType || "N/A"}
                             </span>
@@ -201,16 +201,20 @@ const BookingList = () => {
                             <span className="text-xs text-gray-500">
                               Room {booking.roomDetails?.[0]?.roomNo || "N/A"}
                             </span>
-                          </td>
+                          </td> */}
 
                           {/* Dates */}
                           <td>
                             <div className="flex flex-col text-sm">
-                              <span className="font-medium">
-                                In: {booking.dates?.checkInDate ? new Date(booking.dates.checkInDate).toLocaleDateString() : "-"}
+                              <span className="font-medium text-primary">
+                                In: {booking.dates?.checkInDate 
+                                  ? new Date(booking.dates.checkInDate).toLocaleDateString('en-GB') 
+                                  : "-"}
                               </span>
                               <span className="opacity-70">
-                                Out: {booking.dates?.checkOutDate ? new Date(booking.dates.checkOutDate).toLocaleDateString() : "-"}
+                                Out: {booking.dates?.checkOutDate 
+                                  ? new Date(booking.dates.checkOutDate).toLocaleDateString('en-GB') 
+                                  : "-"}
                               </span>
                             </div>
                           </td>

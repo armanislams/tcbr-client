@@ -89,13 +89,7 @@ const BookingInfo = () => {
   });
 
   const formatDate = (dateString) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-MY", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      : "-";
+    dateString ? new Date(dateString).toLocaleDateString("en-GB") : "-";
 
   const formatCurrency = (amount) => {
     const numAmount = Number(amount);
