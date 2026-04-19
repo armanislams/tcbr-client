@@ -21,7 +21,7 @@ const BookingList = () => {
   }, [searchTerm]);
 
   // Fetch bookings with server-side filtering
-  const { data: bookings = [], isLoading, isError, error } = useQuery({
+  const { data: rawData = [], isLoading, isError, error } = useQuery({
     queryKey: ['bookings', { search: debouncedSearch, status: statusFilter }],
     queryFn: async () => {
       const params = {};
@@ -32,8 +32,16 @@ const BookingList = () => {
       return res.data;
     }
   });
-  console.log(bookings);
+
+  // Ensure bookings is always an array, handling possible wrapped responses
+  const bookings = Array.isArray(rawData) ? rawData : (rawData?.bookings || []);
   
+  // Debug log to help identify data structure issues if they persist
+  useEffect(() => {
+    if (!isLoading && !isError) {
+      console.log("Bookings Data:", bookings);
+    }
+  }, [bookings, isLoading, isError]);
 
   // Animation Variants
   const containerVariants = {
@@ -41,13 +49,13 @@ const BookingList = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.05,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0 },
   };
 
@@ -56,6 +64,7 @@ const BookingList = () => {
       Success: "badge-success",
       Pending: "badge-warning",
       Failed: "badge-error",
+      Cancelled: "badge-error",
     };
     return <div className={`badge ${styles[status] || "badge-ghost"} gap-2`}>{status}</div>;
   };
@@ -127,42 +136,46 @@ const BookingList = () => {
               </thead>
               <motion.tbody
                 variants={containerVariants}
-                initial="hidden"
+                initial="show" // Ensure it's visible by default to prevent stuck hidden state
                 animate="show"
               >
-                <AnimatePresence>
-                  {isLoading && (
-                    <tr>
-                      <td colSpan="6">
-                        <div className="flex flex-col gap-4 py-4">
-                          {[...Array(3)].map((_, i) => (
-                            <div key={i} className="flex gap-4 items-center">
-                              <div className="skeleton h-12 w-12 rounded-full shrink-0"></div>
-                              <div className="flex flex-col gap-2 flex-1">
-                                <div className="skeleton h-4 w-1/4"></div>
-                                <div className="skeleton h-4 w-1/2"></div>
-                              </div>
+                {isLoading && (
+                  <tr>
+                    <td colSpan="6">
+                      <div className="flex flex-col gap-4 py-4 px-4">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex gap-4 items-center">
+                            <div className="skeleton h-12 w-12 rounded-full shrink-0"></div>
+                            <div className="flex flex-col gap-2 flex-1">
+                              <div className="skeleton h-4 w-1/4"></div>
+                              <div className="skeleton h-4 w-1/2"></div>
                             </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  {isError && (
-                    <tr>
-                      <td colSpan="6">
-                        <div className="alert alert-error">
-                          <span>Error loading bookings: {error?.message || 'Please try again later.'}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                
+                {isError && (
+                  <tr>
+                    <td colSpan="6">
+                      <div className="alert alert-error m-4">
+                        <span>Error loading bookings: {error?.message || 'Please check your connection.'}</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+                <AnimatePresence mode="popLayout">
                   {!isLoading && !isError && (
                     bookings.length > 0 ? (
                       bookings.map((booking) => (
                         <motion.tr
                           key={booking._id}
                           variants={itemVariants}
+                          initial="hidden"
+                          animate="show"
                           exit={{ opacity: 0, x: -20 }}
                           layout
                           className="hover"
@@ -171,9 +184,9 @@ const BookingList = () => {
                           <td>
                             <div className="flex items-center gap-3">
                               <div>
-                                <div className="font-bold">{booking.customerDetails?.name}</div>
+                                <div className="font-bold">{booking.customerDetails?.name || "Unknown"}</div>
                                 <div className="text-sm opacity-50">
-                                  {booking.customerDetails?.customerCode}
+                                  {booking.customerDetails?.customerCode || "N/A"}
                                 </div>
                               </div>
                             </div>
@@ -181,12 +194,12 @@ const BookingList = () => {
 
                           {/* Room Info */}
                           <td>
-                            <span className="badge badge-ghost badge-sm">
+                            <span className="badge badge-ghost badge-sm font-semibold">
                               {booking.roomDetails?.[0]?.roomType || "N/A"}
                             </span>
                             <br />
                             <span className="text-xs text-gray-500">
-                              Room {booking.roomDetails?.[0]?.roomNo}
+                              Room {booking.roomDetails?.[0]?.roomNo || "N/A"}
                             </span>
                           </td>
 
@@ -194,10 +207,10 @@ const BookingList = () => {
                           <td>
                             <div className="flex flex-col text-sm">
                               <span className="font-medium">
-                                In: {new Date(booking.dates?.checkInDate).toLocaleDateString()}
+                                In: {booking.dates?.checkInDate ? new Date(booking.dates.checkInDate).toLocaleDateString() : "-"}
                               </span>
                               <span className="opacity-70">
-                                Out: {new Date(booking.dates?.checkOutDate).toLocaleDateString()}
+                                Out: {booking.dates?.checkOutDate ? new Date(booking.dates.checkOutDate).toLocaleDateString() : "-"}
                               </span>
                             </div>
                           </td>
@@ -205,12 +218,12 @@ const BookingList = () => {
                           {/* Financials */}
                           <td>
                             <div className="flex flex-col gap-1">
-                              <div className="badge badge-outline badge-success text-xs">
-                                Paid: ${booking.billing?.calculations?.finalTotal} {/* Assuming this logic, verify field */}
+                              <div className="badge badge-outline badge-success text-xs font-bold">
+                                Paid: ${booking.billing?.calculations?.finalTotal || 0}
                               </div>
                               {booking.billing?.calculations?.balanceDue > 0 && (
-                                <div className="badge badge-outline badge-error text-xs">
-                                  Due: ${booking.billing?.calculations?.balanceDue}
+                                <div className="badge badge-outline badge-error text-xs font-bold">
+                                  Due: ${booking.billing.calculations.balanceDue}
                                 </div>
                               )}
                             </div>
@@ -222,33 +235,38 @@ const BookingList = () => {
                           </td>
 
                           {/* Actions */}
-                          <td>
+                          <td className="print:hidden">
                             <div className="dropdown dropdown-left">
-                              <div tabIndex={0} role="button" className="btn btn-ghost btn-xs">
+                              <div tabIndex={0} role="button" className="btn btn-ghost btn-outline btn-xs">
                                 <FaEllipsisH />
                               </div>
-                              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
+                              <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-2xl bg-base-100 rounded-box w-32 border border-base-300">
                                 <li>
-                                  <Link to={`/booking-info/${booking._id}`}><FaEye /> View</Link>
+                                  <Link to={`/booking-info/${booking._id}`}><FaEye className="text-primary"/> View</Link>
                                 </li>
                                 <li>
-                                  <Link to={`/update-booking/${booking._id}`}><FaEdit /> Edit</Link>
+                                  <Link to={`/update-booking/${booking._id}`}><FaEdit className="text-info"/> Edit</Link>
                                 </li>
-                                {/* <li><a className="text-error"><FaTrash /> Delete</a></li> */}
                               </ul>
                             </div>
                           </td>
                         </motion.tr>
                       ))
                     ) : (
-                      <tr>
-                        <td colSpan="6">
-                          <div className="flex flex-col items-center justify-center py-10 opacity-50">
-                            <FaFilter className="text-4xl mb-2" />
-                            <p>No bookings found matching your criteria.</p>
+                      <motion.tr
+                        key="no-results"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <td colSpan="6" className="text-center py-16">
+                          <div className="flex flex-col items-center justify-center opacity-40">
+                            <FaFilter className="text-5xl mb-4" />
+                            <p className="text-xl font-medium">No bookings found matching your criteria.</p>
+                            <p className="text-sm">Try adjusting your filters or search term.</p>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     )
                   )}
                 </AnimatePresence>
