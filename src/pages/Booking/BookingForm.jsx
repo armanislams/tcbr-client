@@ -102,7 +102,8 @@ const BookingForm = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save booking");
+      const errMsg = error.response?.data?.error || "Failed to save booking";
+      toast.error(errMsg);
     } finally {
       setSaving(false);
     }

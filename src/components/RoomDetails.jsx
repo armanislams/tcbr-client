@@ -3,7 +3,17 @@ import { FaHome, FaAngleDown, FaUsers, FaUser, FaPlus, FaTimes } from 'react-ico
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 const RoomDetails = () => {
-  const { control, register, formState: { errors } } = useFormContext();
+  const { control, register, formState: { errors }, watch } = useFormContext();
+
+  const roomPrefixMap = {
+    "Sea View Villa": "S",
+    "HillSide Villa": "H",
+    "BeachFront Deluxe": "B(D)",
+    "BeachFront Chalet": "B(C)",
+    "BayView Chalet": "H",
+    "Standard Room": "D(S)",
+    "Dorms": "D(D)",
+  };
 
   const { fields, append, remove, insert } = useFieldArray({
     control,
@@ -67,6 +77,8 @@ const RoomDetails = () => {
         {fields.map((field, index) => {
           // Error handling for specific field
           const roomErrors = errors.rooms?.[index] || {};
+          const selectedRoomType = watch(`rooms.${index}.roomType`);
+          const prefix = selectedRoomType ? (roomPrefixMap[selectedRoomType] || "") : "";
 
           return (
             <div
@@ -132,6 +144,7 @@ const RoomDetails = () => {
                     <option value="BeachFront Chalet">BeachFront Chalet</option>
                     <option value="BayView Chalet">BayView Chalet</option>
                     <option value="Standard Room">Standard Room</option>
+                    <option value="Dorms">Dorms</option>
                   </select>
                   <FaHome className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
                   <FaAngleDown className="absolute right-0 top-0 h-full w-4 mr-3 text-gray-400 pointer-events-none" />
@@ -149,9 +162,12 @@ const RoomDetails = () => {
                     {...register(`rooms.${index}.roomNo`, { required: "Room No is required" })}
                   >
                     <option value="">Choose Room No</option>
-                    {Array.from({ length: 10 }, (_, i) => 101 + i).map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
+                    {Array.from({ length: 10 }, (_, i) => 101 + i).map(num => {
+                      const roomValue = `${prefix}${num}`;
+                      return (
+                        <option key={roomValue} value={roomValue}>{roomValue}</option>
+                      );
+                    })}
                   </select>
                   <FaHome className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
                   <FaAngleDown className="absolute right-0 top-0 h-full w-4 mr-3 text-gray-400 pointer-events-none" />

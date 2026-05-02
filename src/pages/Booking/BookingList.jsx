@@ -216,6 +216,9 @@ const BookingList = () => {
                                   ? new Date(booking.dates.checkOutDate).toLocaleDateString('en-GB') 
                                   : "-"}
                               </span>
+                              {booking.isB2B && (
+                                <span className="badge badge-warning badge-sm mt-1">{booking.b2bText || "B2B"}</span>
+                              )}
                             </div>
                           </td>
 
