@@ -38,10 +38,10 @@ const BillingInputForm = ({ calculatedCommission }) => {
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
-      {/* Payment Details */}
+      {/* Discount Details */}
       <div className="p-6 bg-white rounded-lg shadow-xl">
         <h2 className="text-xl font-semibold text-gray-800 mb-6">
-          Payment Details
+          Discount Details
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <FieldWithIcon label="Discount Reason" error={errors.discountReason}>

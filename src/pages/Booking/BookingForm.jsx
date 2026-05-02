@@ -1,6 +1,7 @@
 import BookingDate from '../../components/BookingDate';
 import RoomDetails from '../../components/RoomDetails';
 import CustomerDetails from '../../components/CustomerDetails';
+import PackageDetails from '../../components/PackageDetails';
 import Billings from '../../components/Billings/Billings';
 import { useState } from 'react';
 import useAxios from '../../components/hooks/useAxios';
@@ -26,6 +27,9 @@ const BookingForm = () => {
 
       // Rooms (Start with one empty room)
       rooms: [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
+
+      // Packages
+      packages: [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
 
       // Customer
       name: '',
@@ -66,6 +70,7 @@ const BookingForm = () => {
         remarks: data.remarks
       },
       roomDetails: data.rooms,
+      packageDetails: data.packages,
       customerDetails: {
         name: data.name,
         customerCode: data.customerCode,
@@ -154,6 +159,15 @@ const BookingForm = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <CustomerDetails />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+        >
+          <PackageDetails />
         </motion.div>
 
         <motion.div
