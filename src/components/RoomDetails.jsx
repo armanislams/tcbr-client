@@ -7,7 +7,7 @@ const RoomDetails = () => {
 
   const roomPrefixMap = {
     "Sea View Villa": "S",
-    "HillSide Villa": "H",
+    "HillSide Villa": "V",
     "BeachFront Deluxe": "B(D)",
     "BeachFront Chalet": "B(C)",
     "BayView Chalet": "H",

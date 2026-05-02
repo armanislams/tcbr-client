@@ -11,6 +11,7 @@ import {
   FaIdCard,
   FaGlobe,
   FaBed,
+  FaBox,
   FaCalendarAlt,
   FaMoneyBillWave,
   FaEdit,
@@ -92,8 +93,19 @@ const BookingInfo = () => {
     dateString ? new Date(dateString).toLocaleDateString("en-GB") : "-";
 
   const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null || amount === "") return "RM 0.00";
     const numAmount = Number(amount);
-    return `RM ${numAmount?.toFixed(2) || "0.00"}`;
+    if (isNaN(numAmount)) return "RM 0.00";
+    return `RM ${numAmount.toFixed(2)}`;
+  };
+
+  const getBalanceDue = (billing) => {
+    if (billing?.calculations?.balanceDue !== undefined) {
+      return billing.calculations.balanceDue;
+    }
+    const total = Number(billing?.totalAmountInput) || 0;
+    const advance = Number(billing?.advanceAmountInput) || 0;
+    return total - advance;
   };
 
   const getStatusBadge = (status) => {
@@ -190,7 +202,7 @@ const BookingInfo = () => {
     );
   }
 
-  const { customerDetails, roomDetails, dates, billing, paymentStatus } = booking;
+  const { customerDetails, roomDetails, packageDetails, dates, billing, paymentStatus } = booking;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200 print:bg-white">
@@ -341,6 +353,53 @@ const BookingInfo = () => {
                 )}
               </div>
             </motion.div>
+
+            {/* Package Details */}
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="card bg-base-100 shadow-lg border border-base-300"
+            >
+              <div className="card-body">
+                <h2 className="card-title text-xl flex items-center gap-2">
+                  <FaBox className="text-primary" />
+                  Package Details
+                </h2>
+                <div className="divider my-2"></div>
+                {Array.isArray(packageDetails) && packageDetails.length ? (
+                  <div className="space-y-4">
+                    {packageDetails.map((pkg, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-base-200 rounded-lg p-4 border-l-4 border-primary"
+                      >
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500">Package Type</p>
+                            <p className="font-semibold">{pkg.packageType || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">No. Pax</p>
+                            <p className="font-semibold">{pkg.noPax || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Quantity</p>
+                            <p className="font-semibold">{pkg.packageQuantity || "-"}</p>
+                          </div>
+                          {/* <div>
+                            <p className="text-xs text-gray-500">Total Price</p>
+                            <p className="font-semibold">{pkg.price ? `RM ${pkg.price}` : "-"}</p>
+                          </div> */}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No package details available.</p>
+                )}
+              </div>
+            </motion.div>
           </div>
 
           {/* Right Column - Dates & Billing */}
@@ -412,9 +471,9 @@ const BookingInfo = () => {
                   </div>
                   <div className="divider my-1"></div>
                   <div className="flex justify-between items-center bg-primary bg-opacity-10 p-3 rounded-lg">
-                    <span className="font-bold text-primary">Balance Due</span>
-                    <span className="font-bold text-xl text-primary">
-                      {formatCurrency(billing?.calculations?.balanceDue)}
+                    <span className="font-bold text-white">Balance Due</span>
+                    <span className="font-bold text-xl text-white">
+                      {formatCurrency(getBalanceDue(billing))}
                     </span>
                   </div>
                 </div>

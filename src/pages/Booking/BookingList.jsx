@@ -226,11 +226,11 @@ const BookingList = () => {
                           <td>
                             <div className="flex flex-col gap-1">
                               <div className="badge badge-outline badge-success text-xs font-bold">
-                                Paid: ${booking.billing?.calculations?.finalTotal || 0}
+                                Total: RM {booking.billing?.totalAmountInput || 0}
                               </div>
-                              {booking.billing?.calculations?.balanceDue > 0 && (
+                              {((Number(booking.billing?.totalAmountInput) || 0) - (Number(booking.billing?.advanceAmountInput) || 0)) > 0 && (
                                 <div className="badge badge-outline badge-error text-xs font-bold">
-                                  Due: ${booking.billing.calculations.balanceDue}
+                                  Due: RM {((Number(booking.billing?.totalAmountInput) || 0) - (Number(booking.billing?.advanceAmountInput) || 0)).toFixed(2)}
                                 </div>
                               )}
                             </div>
@@ -238,7 +238,7 @@ const BookingList = () => {
 
                           {/* Status */}
                           <td>
-                            <StatusBadge status={booking.paymentStatus || "Pending"} />
+                            <StatusBadge status={booking.paymentStatus || "UnAvalaible"} />
                           </td>
 
                           {/* Actions */}
