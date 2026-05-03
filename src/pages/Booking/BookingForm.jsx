@@ -3,15 +3,15 @@ import RoomDetails from '../../components/RoomDetails';
 import CustomerDetails from '../../components/CustomerDetails';
 import PackageDetails from '../../components/PackageDetails';
 import Billings from '../../components/Billings/Billings';
-import { useState } from 'react';
 import useAxios from '../../components/hooks/useAxios';
 import { toast } from 'react-toastify';
 import { useForm, FormProvider } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const BookingForm = () => {
   const AxiosInstance = useAxios();
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   // Initialize React Hook Form
   const methods = useForm({
@@ -53,12 +53,30 @@ const BookingForm = () => {
     mode: 'onBlur' // Validate on blur
   });
 
-  const onSubmit = async (data) => {
-    setSaving(true);
+  const addMutation = useMutation({
+    mutationFn: async (bookingData) => {
+      const res = await AxiosInstance.post("/bookings", bookingData);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data.insertedId || data.status === 200 || data._id) {
+        toast.success("Booking added successfully!");
+        methods.reset(); // Reset form
+        queryClient.invalidateQueries(["bookings"]);
+      } else {
+        toast.error("Something went wrong!");
+      }
+    },
+    onError: (error) => {
+      console.error(error);
+      const errMsg = error.response?.data?.error || "Failed to save booking";
+      toast.error(errMsg);
+    }
+  });
+
+  const onSubmit = (data) => {
     console.log("Form Data Submitted:", data);
 
-    // Transform flat form data back to structured object if API expects it
-    // Or keep it flat if that's what you prefer. matching old structure:
     const bookingData = {
       dates: {
         checkInDate: data.checkInDate,
@@ -90,28 +108,10 @@ const BookingForm = () => {
         advanceAmountInput: data.advanceAmountInput,
         bookingChargeInput: data.bookingChargeInput,
         extraCharges: data.extraCharges,
-        // Note: Calculated values (subtotal, finalTotal etc) are usually re-calculated on backend 
-        // or can be passed if trusted. For now, we send raw inputs.
       }
     };
 
-    try {
-      const res = await AxiosInstance.post("/bookings", bookingData);
-      console.log(res);
-
-      if (res.data.insertedId || res.status === 200) {
-        toast.success("Booking added successfully!");
-        methods.reset(); // Reset form
-      } else {
-        toast.error("Something went wrong!");
-      }
-    } catch (error) {
-      console.error(error);
-      const errMsg = error.response?.data?.error || "Failed to save booking";
-      toast.error(errMsg);
-    } finally {
-      setSaving(false);
-    }
+    addMutation.mutate(bookingData);
   };
 
   const onError = (errors) => {
@@ -188,10 +188,10 @@ const BookingForm = () => {
         >
           <button
             type="submit"
-            disabled={saving}
+            disabled={addMutation.isPending}
             className="bg-indigo-600 btn h-16 text-2xl text-white font-bold py-3 px-10 rounded-xl shadow-xl hover:bg-indigo-700 hover:shadow-2xl transition duration-200 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? "Saving...." : "Save Booking"}
+            {addMutation.isPending ? "Saving...." : "Save Booking"}
           </button>
         </motion.div>
       </form>

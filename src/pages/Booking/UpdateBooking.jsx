@@ -3,19 +3,18 @@ import RoomDetails from "../../components/RoomDetails";
 import CustomerDetails from "../../components/CustomerDetails";
 import Billings from "../../components/Billings/Billings";
 import PackageDetails from "../../components/PackageDetails";
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
 import useAxios from "../../components/hooks/useAxios";
 import { toast } from "react-toastify";
 import { useNavigate, useParams } from "react-router";
 import { useForm, FormProvider } from "react-hook-form";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const UpdateBooking = () => {
   const { id } = useParams(); // booking id
   const AxiosInstance = useAxios();
-  const navigate = useNavigate()
-
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
+  // const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const methods = useForm({
     defaultValues: {
@@ -49,57 +48,69 @@ const UpdateBooking = () => {
   });
 
   // Fetch existing booking data
-  useEffect(() => {
-    const fetchBooking = async () => {
-      try {
-        const res = await AxiosInstance.get(`/bookings/${id}`);
-        const data = res.data;
-        console.log("Fetched booking:", data);
+  const { isLoading: loading, isError } = useQuery({
+    queryKey: ['booking', id],
+    queryFn: async () => {
+      const res = await AxiosInstance.get(`/bookings/${id}`);
+      const data = res.data;
+      console.log("Fetched booking:", data);
 
-        methods.reset({
-          checkInDate: data.dates?.checkInDate ? new Date(data.dates.checkInDate) : null,
-          checkOutDate: data.dates?.checkOutDate ? new Date(data.dates.checkOutDate) : null,
-          bookingDate: data.dates?.bookingDate ? new Date(data.dates.bookingDate) : new Date(),
-          bookingType: data.dates?.bookingType || "",
-          bookingReference: data.dates?.bookingReference || "",
-          purposeOfVisit: data.dates?.purposeOfVisit || "",
-          remarks: data.dates?.remarks || "",
+      methods.reset({
+        checkInDate: data.dates?.checkInDate ? new Date(data.dates.checkInDate) : null,
+        checkOutDate: data.dates?.checkOutDate ? new Date(data.dates.checkOutDate) : null,
+        bookingDate: data.dates?.bookingDate ? new Date(data.dates.bookingDate) : new Date(),
+        bookingType: data.dates?.bookingType || "",
+        bookingReference: data.dates?.bookingReference || "",
+        purposeOfVisit: data.dates?.purposeOfVisit || "",
+        remarks: data.dates?.remarks || "",
 
-          rooms: data.roomDetails?.length ? data.roomDetails : [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
-          packages: data.packageDetails?.length ? data.packageDetails : [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
+        rooms: data.roomDetails?.length ? data.roomDetails : [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
+        packages: data.packageDetails?.length ? data.packageDetails : [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
 
-          name: data.customerDetails?.name || "",
-          customerCode: data.customerDetails?.customerCode || "",
-          mobile: data.customerDetails?.mobile || "",
-          email: data.customerDetails?.email || "",
-          gender: data.customerDetails?.gender || "",
-          nationality: data.customerDetails?.nationality || "",
+        name: data.customerDetails?.name || "",
+        customerCode: data.customerDetails?.customerCode || "",
+        mobile: data.customerDetails?.mobile || "",
+        email: data.customerDetails?.email || "",
+        gender: data.customerDetails?.gender || "",
+        nationality: data.customerDetails?.nationality || "",
 
-          discountReason: data.billing?.discountReason || "",
-          discount: data.billing?.discount || "",
-          commission: data.billing?.commission || "",
-          paymentMode: data.billing?.paymentMode || "",
-          paymentStatus: data.billing?.paymentStatus || "pending",
-          totalAmountInput: data.billing?.totalAmountInput || "",
-          advanceRemarks: data.billing?.advanceRemarks || "",
-          advanceAmountInput: data.billing?.advanceAmountInput || "",
-          bookingChargeInput: data.billing?.bookingChargeInput || "",
-          extraCharges: data.billing?.extraCharges || [],
-        });
+        discountReason: data.billing?.discountReason || "",
+        discount: data.billing?.discount || "",
+        commission: data.billing?.commission || "",
+        paymentMode: data.billing?.paymentMode || "",
+        paymentStatus: data.billing?.paymentStatus || "pending",
+        totalAmountInput: data.billing?.totalAmountInput || "",
+        advanceRemarks: data.billing?.advanceRemarks || "",
+        advanceAmountInput: data.billing?.advanceAmountInput || "",
+        bookingChargeInput: data.billing?.bookingChargeInput || "",
+        extraCharges: data.billing?.extraCharges || [],
+      });
+      return data;
+    },
+    enabled: !!id,
+    refetchOnWindowFocus: false, // Don't refetch automatically to prevent wiping form state
+  });
 
-      } catch (err) {
-        console.error("Failed to fetch booking", err);
-        toast.error("Failed to load booking");
-      } finally {
-        setLoading(false);
-        navigate(`/bookings/${id}`)
-      }
-    };
-    fetchBooking();
-  }, [id, AxiosInstance, methods, navigate]);
+  const updateMutation = useMutation({
+    mutationFn: async (bookingData) => {
+      const res = await AxiosInstance.patch(`/bookings/${id}`, bookingData);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Booking updated successfully!");
+      queryClient.invalidateQueries(["booking", id]);
+      queryClient.invalidateQueries(["bookings"]);
+      // Optional: navigate away after successful update
+      // navigate(`/booking-info/${id}`);
+    },
+    onError: (err) => {
+      console.error(err);
+      const errMsg = err.response?.data?.error || "Error updating booking!";
+      toast.error(errMsg);
+    }
+  });
 
-  const onSubmit = async (data) => {
-    setUpdating(true);
+  const onSubmit = (data) => {
     const bookingData = {
       dates: {
         checkInDate: data.checkInDate,
@@ -134,20 +145,7 @@ const UpdateBooking = () => {
       }
     };
 
-    try {
-      const res = await AxiosInstance.patch(`/bookings/${id}`, bookingData);
-      if (res.status === 200) {
-        toast.success("Booking updated successfully!");
-      } else {
-        toast.error("Failed to update booking!");
-      }
-    } catch (err) {
-      console.error(err);
-      const errMsg = err.response?.data?.error || "Error updating booking!";
-      toast.error(errMsg);
-    } finally {
-      setUpdating(false);
-    }
+    updateMutation.mutate(bookingData);
   };
 
   const onError = (errors) => {
@@ -155,8 +153,8 @@ const UpdateBooking = () => {
     toast.warn("Please fill required fields");
   };
 
-  if (loading)
-    return <p className="text-center mt-10">Loading booking data...</p>;
+  if (loading) return <p className="text-center mt-10">Loading booking data...</p>;
+  if (isError) return <p className="text-center mt-10 text-red-500">Error loading booking data</p>;
 
   return (
     <FormProvider {...methods}>
@@ -172,10 +170,10 @@ const UpdateBooking = () => {
         <div className="flex justify-end pt-4">
           <button
             type="submit"
-            disabled={updating}
+            disabled={updateMutation.isPending}
             className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 transition duration-150 disabled:opacity-50"
           >
-            {updating ? "Updating..." : "Update Booking"}
+            {updateMutation.isPending ? "Updating..." : "Update Booking"}
           </button>
         </div>
       </form>
