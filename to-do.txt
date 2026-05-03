@@ -1,1 +1,0 @@
-send booking date to server
