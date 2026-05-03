@@ -60,13 +60,15 @@ const BookingList = () => {
   };
 
   const StatusBadge = ({ status }) => {
+    // Normalize status to handle case sensitivity
+    const normalizedStatus = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "";
     const styles = {
-      Success: "badge-success",
+      Confirmed: "badge-success",
       Pending: "badge-warning",
-      Failed: "badge-error",
       Cancelled: "badge-error",
+      Postponed: "badge-info",
     };
-    return <div className={`badge ${styles[status] || "badge-ghost"} gap-2`}>{status}</div>;
+    return <div className={`badge ${styles[normalizedStatus] || "badge-ghost"} gap-2`}>{normalizedStatus || "Unknown"}</div>;
   };
 
   return (
@@ -238,7 +240,7 @@ const BookingList = () => {
 
                           {/* Status */}
                           <td>
-                            <StatusBadge status={booking.paymentStatus || "UnAvalaible"} />
+                            <StatusBadge status={booking.billing?.paymentStatus || "UnAvalaible"} />
                           </td>
 
                           {/* Actions */}

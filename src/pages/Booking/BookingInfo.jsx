@@ -47,12 +47,15 @@ const BookingInfo = () => {
     enabled: !!id,
   });
 
-  // Mark as Paid Mutation
+  // Confirm Booking Mutation
   const markAsPaidMutation = useMutation({
     mutationFn: async () => {
       const updatedBooking = {
         ...booking,
-        paymentStatus: "Success",
+        billing: {
+          ...booking.billing,
+          paymentStatus: "Confirmed",
+        }
       };
       const res = await AxiosInstance.patch(`/bookings/${id}`, updatedBooking);
       return res.data;
@@ -60,10 +63,33 @@ const BookingInfo = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["booking", id]);
       queryClient.invalidateQueries(["bookings"]);
-      toast.success("Booking marked as paid successfully!");
+      toast.success("Booking confirmed successfully!");
     },
     onError: (error) => {
-      toast.error(`Failed to mark as paid: ${error.message}`);
+      toast.error(`Failed to confirm booking: ${error.message}`);
+    },
+  });
+
+  // Postpone Booking Mutation
+  const postponeBookingMutation = useMutation({
+    mutationFn: async () => {
+      const updatedBooking = {
+        ...booking,
+        billing: {
+          ...booking.billing,
+          paymentStatus: "Postponed",
+        }
+      };
+      const res = await AxiosInstance.patch(`/bookings/${id}`, updatedBooking);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["booking", id]);
+      queryClient.invalidateQueries(["bookings"]);
+      toast.success("Booking postponed successfully!");
+    },
+    onError: (error) => {
+      toast.error(`Failed to postpone booking: ${error.message}`);
     },
   });
 
@@ -74,7 +100,10 @@ const BookingInfo = () => {
       // Using PATCH to mark as cancelled for now
       const updatedBooking = {
         ...booking,
-        paymentStatus: "Cancelled",
+        billing: {
+          ...booking.billing,
+          paymentStatus: "Cancelled",
+        }
       };
       const res = await AxiosInstance.patch(`/bookings/${id}`, updatedBooking);
       return res.data;
@@ -109,16 +138,18 @@ const BookingInfo = () => {
   };
 
   const getStatusBadge = (status) => {
+    const normalizedStatus = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "";
     const badges = {
-      Success: { class: "badge-success", icon: FaCheckCircle },
+      Confirmed: { class: "badge-success", icon: FaCheckCircle },
       Pending: { class: "badge-warning", icon: FaClock },
       Cancelled: { class: "badge-error", icon: FaTimesCircle },
+      Postponed: { class: "badge-info", icon: FaClock },
     };
-    const badge = badges[status] || badges.Pending;
+    const badge = badges[normalizedStatus] || badges.Pending;
     const Icon = badge.icon;
     return (
       <div className={`badge ${badge.class} gap-2 px-4 py-3`}>
-        <Icon /> {status || "not found"}
+        <Icon /> {normalizedStatus || "Unknown"}
       </div>
     );
   };
@@ -127,20 +158,37 @@ const BookingInfo = () => {
     window.print();
   };
 
-  const handleMarkAsPaid = async () => {
+  const handleConfirm = async () => {
     const result = await Swal.fire({
-      title: "Mark as Paid?",
-      text: "Are you sure you want to mark this booking as paid?",
+      title: "Confirm Booking?",
+      text: "Are you sure you want to confirm this booking?",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#10b981",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: "Yes, mark as paid!",
+      confirmButtonText: "Yes, confirm it!",
       cancelButtonText: "Cancel",
     });
 
     if (result.isConfirmed) {
       markAsPaidMutation.mutate();
+    }
+  };
+
+  const handlePostpone = async () => {
+    const result = await Swal.fire({
+      title: "Postpone Booking?",
+      text: "Are you sure you want to postpone this booking?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3b82f6",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, postpone it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      postponeBookingMutation.mutate();
     }
   };
 
@@ -202,7 +250,7 @@ const BookingInfo = () => {
     );
   }
 
-  const { customerDetails, roomDetails, packageDetails, dates, billing, paymentStatus } = booking;
+  const { customerDetails, roomDetails, packageDetails, dates, billing } = booking;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200 print:bg-white">
@@ -234,7 +282,7 @@ const BookingInfo = () => {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {getStatusBadge(paymentStatus)}
+                {getStatusBadge(billing?.paymentStatus)}
               </div>
             </div>
           </div>
@@ -497,9 +545,9 @@ const BookingInfo = () => {
                     <FaEdit /> Edit Booking
                   </Link>
 
-                  {paymentStatus !== "Success" && (
+                  {billing?.paymentStatus?.toLowerCase() !== "confirmed" && (
                     <button
-                      onClick={handleMarkAsPaid}
+                      onClick={handleConfirm}
                       disabled={markAsPaidMutation.isPending}
                       className="btn btn-success btn-block gap-2"
                     >
@@ -510,7 +558,26 @@ const BookingInfo = () => {
                         </>
                       ) : (
                         <>
-                          <FaCheck /> Mark as Paid
+                          <FaCheck /> Confirm Booking
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {billing?.paymentStatus?.toLowerCase() !== "postponed" && (
+                    <button
+                      onClick={handlePostpone}
+                      disabled={postponeBookingMutation.isPending}
+                      className="btn btn-info btn-block gap-2 text-white"
+                    >
+                      {postponeBookingMutation.isPending ? (
+                        <>
+                          <span className="loading loading-spinner loading-sm"></span>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <FaClock /> Postpone Booking
                         </>
                       )}
                     </button>
@@ -520,7 +587,7 @@ const BookingInfo = () => {
                     <FaPrint /> Print Details
                   </button>
 
-                  {paymentStatus !== "Cancelled" && (
+                  {billing?.paymentStatus?.toLowerCase() !== "cancelled" && (
                     <button
                       onClick={handleDelete}
                       disabled={deleteBookingMutation.isPending}
