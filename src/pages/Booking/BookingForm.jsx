@@ -27,7 +27,7 @@ const BookingForm = () => {
       remarks: '',
 
       // Rooms (Start with one empty room)
-      rooms: [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
+      rooms: [{ roomType: "", roomNo: "", adults: 0, children: 0, price: "" }],
 
       // Packages
       packages: [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
@@ -91,7 +91,10 @@ const BookingForm = () => {
         purposeOfVisit: data.purposeOfVisit,
         remarks: data.remarks
       },
-      roomDetails: data.rooms,
+      roomDetails: data.rooms?.map(room => ({
+        ...room,
+        price: room.price ? Number(room.price) : 0
+      })),
       packageDetails: data.packages,
       customerDetails: {
         name: data.name,

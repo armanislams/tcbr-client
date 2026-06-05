@@ -25,7 +25,7 @@ const UpdateBooking = () => {
       bookingReference: '',
       purposeOfVisit: '',
       remarks: '',
-      rooms: [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
+      rooms: [{ roomType: "", roomNo: "", adults: 0, children: 0, price: "" }],
       packages: [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
       name: '',
       customerCode: '',
@@ -66,7 +66,7 @@ const UpdateBooking = () => {
         purposeOfVisit: data.dates?.purposeOfVisit || "",
         remarks: data.dates?.remarks || "",
 
-        rooms: data.roomDetails?.length ? data.roomDetails : [{ roomType: "", roomNo: "", adults: 0, children: 0 }],
+        rooms: data.roomDetails?.length ? data.roomDetails.map(r => ({ ...r, price: r.price !== undefined ? String(r.price) : "" })) : [{ roomType: "", roomNo: "", adults: 0, children: 0, price: "" }],
         packages: data.packageDetails?.length ? data.packageDetails : [{ packageType: "", noPax: "", packageQuantity: "", price: "" }],
 
         name: data.customerDetails?.name || "",
@@ -125,7 +125,10 @@ const UpdateBooking = () => {
         purposeOfVisit: data.purposeOfVisit,
         remarks: data.remarks
       },
-      roomDetails: data.rooms,
+      roomDetails: data.rooms?.map(room => ({
+        ...room,
+        price: room.price ? Number(room.price) : 0
+      })),
       packageDetails: data.packages,
       customerDetails: {
         name: data.name,
