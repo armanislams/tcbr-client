@@ -49,7 +49,8 @@ const FieldWrapper = ({ label, children, required = false, error }) => (
 );
 
 const BookingDate = () => {
-  const { control, register, formState: { errors } } = useFormContext();
+  const { control, register, formState: { errors }, watch } = useFormContext();
+  const checkInDate = watch("checkInDate");
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-xl max-w-4xl mx-auto my-10 space-y-6">
@@ -87,7 +88,21 @@ const BookingDate = () => {
         <Controller
           control={control}
           name="checkOutDate"
-          rules={{ required: "Check-out date is required" }}
+          rules={{
+            required: "Check-out date is required",
+            validate: (value) => {
+              if (checkInDate && value) {
+                const checkIn = new Date(checkInDate);
+                const checkOut = new Date(value);
+                checkIn.setHours(0, 0, 0, 0);
+                checkOut.setHours(0, 0, 0, 0);
+                if (checkOut <= checkIn) {
+                  return "Check-out must be after check-in date";
+                }
+              }
+              return true;
+            }
+          }}
           render={({ field }) => (
             <FieldWrapper label="Check Out" required error={errors.checkOutDate}>
               <DatePicker

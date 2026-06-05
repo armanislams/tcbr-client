@@ -3,7 +3,7 @@ import { FaSearch, FaFilter, FaPlus, FaEllipsisH, FaEye, FaEdit, FaTrash } from 
 import { Link } from "react-router";
 import useAxios from "../../components/hooks/useAxios";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 const BookingList = () => {
   const AxiosInstance = useAxios();
@@ -20,26 +20,61 @@ const BookingList = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch bookings with server-side filtering
-  const { data: rawData = [], isLoading, isError, error } = useQuery({
-    queryKey: ['bookings', { search: debouncedSearch, status: statusFilter }],
-    queryFn: async () => {
-      const params = {};
+  // Fetch bookings with infinite scroll and server-side filtering/sorting/pagination
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["bookings", { search: debouncedSearch, status: statusFilter }],
+    queryFn: async ({ pageParam = 1 }) => {
+      const params = {
+        page: pageParam,
+        limit: 10,
+      };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== "All") params.status = statusFilter;
 
-      const res = await AxiosInstance.get('/bookings', { params });
+      const res = await AxiosInstance.get("/bookings", { params });
       return res.data;
-    }
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.page + 1;
+      return nextPage <= lastPage.totalPages ? nextPage : undefined;
+    },
   });
 
-  // Ensure bookings is always an array, handling possible wrapped responses
-  const bookings = Array.isArray(rawData) ? rawData : (rawData?.bookings || []);
-  
-  // Debug log to help identify data structure issues if they persist
+  // Flatten the array of pages into a single bookings array
+  const bookings = data ? data.pages.flatMap((page) => page.bookings || []) : [];
+
+  // Automatic load more when scroll reaches bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+
+      // When user is within 150px of the bottom of the page
+      if (scrollHeight - scrollTop - clientHeight < 150) {
+        if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Debug log
   useEffect(() => {
     if (!isLoading && !isError) {
-      console.log("Bookings Data:", bookings);
+      console.log("Bookings Data loaded:", bookings);
     }
   }, [bookings, isLoading, isError]);
 
@@ -283,6 +318,28 @@ const BookingList = () => {
             </table>
           </div>
         </div>
+        
+        {/* Load More indicator / button */}
+        {(hasNextPage || isFetchingNextPage) && (
+          <div className="flex justify-center my-6">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="btn btn-outline btn-primary btn-sm px-6"
+            >
+              {isFetchingNextPage ? (
+                <span className="loading loading-spinner loading-xs mr-2"></span>
+              ) : null}
+              {isFetchingNextPage ? "Loading more..." : "Load More Bookings"}
+            </button>
+          </div>
+        )}
+
+        {!hasNextPage && bookings.length > 0 && (
+          <p className="text-center text-sm text-gray-500 my-6">
+            Showing all {bookings.length} bookings
+          </p>
+        )}
       </div>
     </div>
   );
