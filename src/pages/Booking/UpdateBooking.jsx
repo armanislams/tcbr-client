@@ -161,7 +161,7 @@ const UpdateBooking = () => {
       <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="space-y-8 p-6">
         <h2 className="text-2xl font-bold text-center">Update Booking</h2>
 
-        <BookingDate />
+        <BookingDate isEdit={true} />
         <RoomDetails />
         <CustomerDetails />
         <PackageDetails />

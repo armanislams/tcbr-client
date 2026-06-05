@@ -338,9 +338,16 @@ const BookingList = () => {
                             <div className="flex items-center gap-3">
                               <div>
                                 <div className="font-bold">{booking.customerDetails?.name || "Unknown"}</div>
-                                <div className="text-sm opacity-50">
-                                  {booking.customerDetails?.customerCode || "N/A"}
+                                <div className="text-xs opacity-60">
+                                  Code: {booking.customerDetails?.customerCode || "N/A"}
                                 </div>
+                                {booking.dates?.bookingReference && (
+                                  <div className="mt-1">
+                                    <span className="badge badge-neutral badge-sm font-mono select-all">
+                                      {booking.dates.bookingReference}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>

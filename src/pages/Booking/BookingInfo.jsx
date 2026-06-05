@@ -24,6 +24,7 @@ import {
   FaChild,
   FaTrash,
   FaCheck,
+  FaRegBookmark,
 } from "react-icons/fa";
 
 const BookingInfo = () => {
@@ -277,9 +278,19 @@ const BookingInfo = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-primary">Booking Details</h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Booking ID: <span className="font-mono font-semibold">{id}</span>
-                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                  <p>
+                    Booking ID: <span className="font-mono font-semibold">{id}</span>
+                  </p>
+                  {dates?.bookingReference && (
+                    <>
+                      <span className="hidden md:inline opacity-30">|</span>
+                      <p>
+                        Reference No: <span className="font-mono font-bold text-secondary bg-secondary/15 px-2 py-0.5 rounded select-all">{dates.bookingReference}</span>
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {getStatusBadge(billing?.paymentStatus)}
@@ -490,6 +501,46 @@ const BookingInfo = () => {
                 </div>
               </div>
             </motion.div>
+
+            {/* Booking Details / Notes */}
+            {(dates?.bookingType || dates?.purposeOfVisit || dates?.remarks) && (
+              <motion.div
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.25 }}
+                className="card bg-base-100 shadow-lg border border-base-300"
+              >
+                <div className="card-body">
+                  <h2 className="card-title text-xl flex items-center gap-2">
+                    <FaRegBookmark className="text-primary" />
+                    Additional Info
+                  </h2>
+                  <div className="divider my-2"></div>
+                  <div className="space-y-3">
+                    {dates?.bookingType && (
+                      <div>
+                        <p className="text-xs text-gray-500">Booking Type</p>
+                        <p className="font-semibold capitalize">{dates.bookingType}</p>
+                      </div>
+                    )}
+                    {dates?.purposeOfVisit && (
+                      <div>
+                        <p className="text-xs text-gray-500">Purpose of Visit</p>
+                        <p className="font-semibold">{dates.purposeOfVisit}</p>
+                      </div>
+                    )}
+                    {dates?.remarks && (
+                      <div>
+                        <p className="text-xs text-gray-500">Remarks</p>
+                        <p className="text-sm bg-base-200 p-2.5 rounded-lg border border-base-300 italic whitespace-pre-wrap mt-0.5">
+                          "{dates.remarks}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Billing Summary */}
             <motion.div

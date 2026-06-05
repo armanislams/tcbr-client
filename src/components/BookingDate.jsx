@@ -168,8 +168,9 @@ const BookingDate = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Booking Reference No."
-              className={inputClasses + " pl-10"}
+              placeholder={isEdit ? "Booking Reference No." : "Auto-generated on Save"}
+              className={inputClasses + " pl-10 bg-gray-50 text-gray-500 cursor-not-allowed"}
+              readOnly
               {...register("bookingReference")}
             />
             <FaRegBookmark className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
