@@ -4,12 +4,18 @@ import { Link } from "react-router";
 import useAxios from "../../components/hooks/useAxios";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const BookingList = () => {
   const AxiosInstance = useAxios();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortBy, setSortBy] = useState("checkIn_desc");
+  const [monthFilter, setMonthFilter] = useState("All");
+  const [yearFilter, setYearFilter] = useState("2026");
+  const [dateFilter, setDateFilter] = useState(null);
 
   // Debounce search input
   useEffect(() => {
@@ -30,7 +36,17 @@ const BookingList = () => {
     isError,
     error,
   } = useInfiniteQuery({
-    queryKey: ["bookings", { search: debouncedSearch, status: statusFilter }],
+    queryKey: [
+      "bookings",
+      {
+        search: debouncedSearch,
+        status: statusFilter,
+        sort: sortBy,
+        month: monthFilter,
+        year: yearFilter,
+        date: dateFilter,
+      },
+    ],
     queryFn: async ({ pageParam = 1 }) => {
       const params = {
         page: pageParam,
@@ -38,6 +54,13 @@ const BookingList = () => {
       };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== "All") params.status = statusFilter;
+      if (sortBy) params.sort = sortBy;
+      if (dateFilter) {
+        params.date = dateFilter.toISOString();
+      } else if (monthFilter !== "All") {
+        params.month = monthFilter;
+        params.year = yearFilter;
+      }
 
       const res = await AxiosInstance.get("/bookings", { params });
       return res.data;
@@ -109,49 +132,142 @@ const BookingList = () => {
   return (
     <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200">
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Header Card */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="card bg-base-100 shadow-xl mb-8 border-t-4 border-primary"
-        >
-          <div className="card-body flex-col md:flex-row justify-between items-center gap-4 py-4">
-            <div>
-              <h2 className="card-title text-2xl font-bold">Booking Management</h2>
-              <p className="text-sm text-gray-500">Manage all your room reservations</p>
-            </div>
+        {/* Title and Action Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Booking Management</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage, sort, and filter all room reservations in one unified system.</p>
+          </div>
+          <Link
+            to="/room-book"
+            className="btn btn-primary btn-md shadow-md hover:shadow-lg transition duration-200 transform hover:-translate-y-0.5"
+          >
+            <FaPlus className="mr-2" /> New Booking
+          </Link>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              {/* Search */}
-              <label className="input input-bordered flex items-center gap-2 input-sm flex-1 md:w-64">
+        {/* Console Filters Toolbar Card */}
+        <motion.div
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="card bg-base-100 shadow-md border border-base-200 mb-8"
+        >
+          <div className="card-body p-5 space-y-4">
+            {/* Top Row: Search and Status Segmented Control */}
+            <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1">
                 <input
                   type="text"
-                  className="grow"
-                  placeholder="Search customer..."
+                  className="input input-bordered w-full pl-10 pr-4 input-md focus:ring-2 focus:ring-primary/20"
+                  placeholder="Search by customer name or code..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <FaSearch className="opacity-70" />
-              </label>
-
-              {/* Filter Dropdown */}
-              <div className="dropdown dropdown-end">
-                <div tabIndex={0} role="button" className="btn btn-sm btn-outline">
-                  <FaFilter /> {statusFilter}
-                </div>
-                <ul tabIndex={0} className="dropdown-content z-1 menu p-2 shadow bg-base-100 rounded-box w-52">
-                  {["All", "Success", "Pending", "Cancelled"].map((status) => (
-                    <li key={status} onClick={() => setStatusFilter(status)}>
-                      <a>{status}</a>
-                    </li>
-                  ))}
-                </ul>
+                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
 
-              {/* Add Button */}
-              <Link to="/room-book" className="btn btn-primary btn-sm">
-                <FaPlus /> New Booking
-              </Link>
+              {/* Status Segmented controls */}
+              <div className="join join-horizontal overflow-x-auto w-full lg:w-auto">
+                {["All", "Success", "Pending", "Cancelled"].map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setStatusFilter(status)}
+                    className={`btn btn-md join-item flex-1 lg:flex-none px-5 ${
+                      statusFilter === status
+                        ? "btn-primary text-white"
+                        : "btn-outline btn-ghost"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Row: Sort and Date Filters Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-base-100">
+              {/* Sort By Dropdown */}
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Sort List By</label>
+                <select
+                  className="select select-bordered select-md w-full text-sm"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="checkIn_desc">Newest Check-In</option>
+                  <option value="checkIn_asc">Oldest Check-In</option>
+                  <option value="booking_desc">Newest Booking</option>
+                  <option value="booking_asc">Oldest Booking</option>
+                </select>
+              </div>
+
+              {/* Month Dropdown */}
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Check-in Month</label>
+                <select
+                  className="select select-bordered select-md w-full text-sm"
+                  value={monthFilter}
+                  onChange={(e) => {
+                    setMonthFilter(e.target.value);
+                    if (e.target.value !== "All") {
+                      setDateFilter(null);
+                    }
+                  }}
+                >
+                  <option value="All">All Months</option>
+                  <option value="01">January</option>
+                  <option value="02">February</option>
+                  <option value="03">March</option>
+                  <option value="04">April</option>
+                  <option value="05">May</option>
+                  <option value="06">June</option>
+                  <option value="07">July</option>
+                  <option value="08">August</option>
+                  <option value="09">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+
+              {/* Year Dropdown */}
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Check-in Year</label>
+                <select
+                  className="select select-bordered select-md w-full text-sm"
+                  value={yearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
+                  disabled={monthFilter === "All"}
+                >
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+
+              {/* Specific Date Filter */}
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Specific Date</label>
+                <div className="relative w-full">
+                  <DatePicker
+                    selected={dateFilter}
+                    onChange={(date) => {
+                      setDateFilter(date);
+                      if (date) {
+                        setMonthFilter("All");
+                      }
+                    }}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Filter by single day..."
+                    isClearable
+                    className="input input-bordered input-md w-full text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
