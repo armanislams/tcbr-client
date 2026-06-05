@@ -1,6 +1,7 @@
 import { Link, useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxios from "../../components/hooks/useAxios";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
@@ -119,6 +120,39 @@ const BookingInfo = () => {
     },
   });
 
+  // Update Payment Mutation
+  const updatePaymentMutation = useMutation({
+    mutationFn: async ({ amountPaid, mode, ref }) => {
+      const currentAdvance = Number(billing?.advanceAmountInput) || 0;
+      const newAdvance = currentAdvance + amountPaid;
+      
+      const newBalance = getBalanceDue(billing) - amountPaid;
+      const newPaymentStatus = newBalance <= 0.01 ? "Confirmed" : billing.paymentStatus;
+
+      const updatedBooking = {
+        ...booking,
+        billing: {
+          ...booking.billing,
+          advanceAmountInput: String(newAdvance),
+          paymentStatus: newPaymentStatus,
+          paymentMode: mode || booking.billing?.paymentMode || "",
+          paymentRef: ref || booking.billing?.paymentRef || ""
+        }
+      };
+      
+      const res = await AxiosInstance.patch(`/bookings/${id}`, updatedBooking);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["booking", id]);
+      queryClient.invalidateQueries(["bookings"]);
+      toast.success("Payment recorded successfully!");
+    },
+    onError: (error) => {
+      toast.error(`Failed to record payment: ${error.message}`);
+    },
+  });
+
   const formatDate = (dateString) =>
     dateString ? new Date(dateString).toLocaleDateString("en-GB") : "-";
 
@@ -136,6 +170,19 @@ const BookingInfo = () => {
     const total = Number(billing?.totalAmountInput) || 0;
     const advance = Number(billing?.advanceAmountInput) || 0;
     return total - advance;
+  };
+
+  const getFinalTotal = (billing) => {
+    const base = Number(billing?.totalAmountInput) || 0;
+    const disc = Number(billing?.discount) || 0;
+    const discounted = base * (1 - disc / 100);
+    const charge = Number(billing?.bookingChargeInput) || 0;
+    
+    let extra = 0;
+    if (Array.isArray(billing?.extraCharges)) {
+      extra = billing.extraCharges.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+    }
+    return discounted + charge + extra;
   };
 
   const getStatusBadge = (status) => {
@@ -210,6 +257,112 @@ const BookingInfo = () => {
     }
   };
 
+  const handleUpdatePayment = async () => {
+    const balanceDue = getBalanceDue(billing);
+    const currentMode = billing?.paymentMode || "Cash";
+    const isStandardMode = ["Cash", "Card Payment", "Bank Transfer"].includes(currentMode);
+    
+    const { value: formValues } = await Swal.fire({
+      title: "Record Payment",
+      html: `
+        <div class="text-left space-y-4">
+          <p class="text-sm text-gray-500 mb-4">
+            Current Balance Due: <strong>RM ${balanceDue.toFixed(2)}</strong>
+          </p>
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text font-semibold">Select Action</span></label>
+            <select id="payment-action" class="select select-bordered w-full">
+              <option value="pay-off">Pay Off Full Balance (RM ${balanceDue.toFixed(2)})</option>
+              <option value="custom">Pay Custom Amount</option>
+            </select>
+          </div>
+          <div id="custom-amount-wrapper" class="form-control w-full hidden mt-3">
+            <label class="label"><span class="label-text font-semibold">Amount to Collect (RM)</span></label>
+            <input id="payment-amount" type="number" step="0.01" min="0.01" max="${balanceDue}" class="input input-bordered w-full" placeholder="0.00">
+          </div>
+          <div class="form-control w-full mt-3">
+            <label class="label"><span class="label-text font-semibold">Payment Method</span></label>
+            <select id="payment-mode" class="select select-bordered w-full">
+              <option value="Cash" ${currentMode === "Cash" ? "selected" : ""}>Cash</option>
+              <option value="Card Payment" ${currentMode === "Card Payment" ? "selected" : ""}>Card Payment</option>
+              <option value="Bank Transfer" ${currentMode === "Bank Transfer" ? "selected" : ""}>Bank Transfer</option>
+              <option value="Other" ${!isStandardMode ? "selected" : ""}>Other</option>
+            </select>
+          </div>
+          <div id="custom-mode-wrapper" class="form-control w-full ${!isStandardMode ? "" : "hidden"} mt-3">
+            <label class="label"><span class="label-text font-semibold">Specify Payment Method</span></label>
+            <input id="payment-custom-mode" type="text" class="input input-bordered w-full" placeholder="Specify method" value="${!isStandardMode ? currentMode : ""}">
+          </div>
+          <div class="form-control w-full mt-3">
+            <label class="label"><span class="label-text font-semibold">Payment Reference (Optional)</span></label>
+            <input id="payment-ref" type="text" class="input input-bordered w-full" placeholder="e.g. TXN-1234, Receipt No.">
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Record",
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#6b7280",
+      didOpen: () => {
+        const actionSelect = document.getElementById("payment-action");
+        const customWrapper = document.getElementById("custom-amount-wrapper");
+        actionSelect.addEventListener("change", (e) => {
+          if (e.target.value === "custom") {
+            customWrapper.classList.remove("hidden");
+          } else {
+            customWrapper.classList.add("hidden");
+          }
+        });
+
+        const modeSelect = document.getElementById("payment-mode");
+        const modeWrapper = document.getElementById("custom-mode-wrapper");
+        modeSelect.addEventListener("change", (e) => {
+          if (e.target.value === "Other") {
+            modeWrapper.classList.remove("hidden");
+          } else {
+            modeWrapper.classList.add("hidden");
+          }
+        });
+      },
+      preConfirm: () => {
+        const action = document.getElementById("payment-action").value;
+        const modeSelectVal = document.getElementById("payment-mode").value;
+        const customModeVal = document.getElementById("payment-custom-mode").value.trim();
+        const mode = modeSelectVal === "Other" ? customModeVal : modeSelectVal;
+        const ref = document.getElementById("payment-ref").value.trim();
+        
+        if (modeSelectVal === "Other" && !customModeVal) {
+          Swal.showValidationMessage("Please specify the custom payment method");
+          return false;
+        }
+
+        if (action === "pay-off") {
+          return { action, amount: balanceDue, mode, ref };
+        } else {
+          const customAmount = parseFloat(document.getElementById("payment-amount").value);
+          if (isNaN(customAmount) || customAmount <= 0) {
+            Swal.showValidationMessage("Please enter a valid amount greater than 0");
+            return false;
+          }
+          if (customAmount > balanceDue) {
+            Swal.showValidationMessage(`Amount cannot exceed the balance due of RM ${balanceDue.toFixed(2)}`);
+            return false;
+          }
+          return { action, amount: customAmount, mode, ref };
+        }
+      }
+    });
+
+    if (formValues) {
+      updatePaymentMutation.mutate({
+        amountPaid: formValues.amount,
+        mode: formValues.mode,
+        ref: formValues.ref
+      });
+    }
+  };
+
   // Loading State
   if (isLoading) {
     return (
@@ -254,8 +407,9 @@ const BookingInfo = () => {
   const { customerDetails, roomDetails, packageDetails, dates, billing } = booking;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200 print:bg-white">
-      <div className="max-w-6xl mx-auto p-6">
+    <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200 print:bg-white print:p-0">
+      {/* Screen View (hidden when printing) */}
+      <div className="max-w-6xl mx-auto p-6 print:hidden">
         {/* Header Section */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -562,8 +716,22 @@ const BookingInfo = () => {
                       {formatCurrency(billing?.totalAmountInput)}
                     </span>
                   </div>
+                  {billing?.paymentMode && (
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>Payment Mode</span>
+                      <span className="font-medium">{billing.paymentMode}</span>
+                    </div>
+                  )}
+                  {billing?.paymentRef && (
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>Payment Reference</span>
+                      <span className="font-medium font-mono bg-base-200 px-1.5 py-0.5 rounded text-xs select-all">
+                        {billing.paymentRef}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Advance Paid</span>
+                    <span className="text-gray-600">Paid Amount</span>
                     <span className="font-semibold text-success">
                       {formatCurrency(billing?.advanceAmountInput)}
                     </span>
@@ -575,6 +743,24 @@ const BookingInfo = () => {
                       {formatCurrency(getBalanceDue(billing))}
                     </span>
                   </div>
+                  {getBalanceDue(billing) > 0 && (
+                    <button
+                      onClick={handleUpdatePayment}
+                      disabled={updatePaymentMutation.isPending}
+                      className="btn btn-outline btn-primary btn-sm btn-block mt-3 gap-2"
+                    >
+                      {updatePaymentMutation.isPending ? (
+                        <>
+                          <span className="loading loading-spinner loading-sm"></span>
+                          Recording...
+                        </>
+                      ) : (
+                        <>
+                          <FaMoneyBillWave /> Record Payment
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -659,6 +845,262 @@ const BookingInfo = () => {
                 </div>
               </div>
             </motion.div>
+          </div>
+        </div>
+      </div> {/* ends print:hidden screen view wrapper */}
+
+      {/* Premium Print-Only Invoice Voucher */}
+      <div className="hidden print:block text-black p-8 font-sans max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-start border-b-2 border-gray-300 pb-6 mb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">TCBR</h1>
+            <p className="text-sm text-gray-500 mt-1 font-medium">TCBR Resort & Villas</p>
+            <p className="text-xs text-gray-400">info@tcbr.com | +60 12-345 6789</p>
+          </div>
+          <div className="text-right">
+            <h2 className="text-xl font-bold text-gray-800 tracking-wide uppercase">Booking Voucher</h2>
+            <div className="mt-2 text-xs text-gray-600 space-y-1">
+              <p><span className="font-semibold">Reference No:</span> <span className="font-mono text-sm font-bold bg-gray-100 px-1 py-0.5 rounded">{dates?.bookingReference || "N/A"}</span></p>
+              <p><span className="font-semibold">Booking ID:</span> <span className="font-mono">{id}</span></p>
+              <p><span className="font-semibold">Date:</span> {formatDate(dates?.bookingDate)}</p>
+              <p>
+                <span className="font-semibold">Status:</span> 
+                <span className={`ml-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  billing?.paymentStatus?.toLowerCase() === "confirmed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                }`}>
+                  {billing?.paymentStatus || "Pending"}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Grid: Guest & Stay Info */}
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          {/* Guest Details */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-bold uppercase text-gray-700 tracking-wider mb-3 pb-1 border-b border-gray-100">Guest Information</h3>
+            <table className="text-xs w-full text-left space-y-2">
+              <tbody>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1 w-24">Full Name</td>
+                  <td className="text-gray-900 font-medium py-1">{customerDetails?.name || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Code</td>
+                  <td className="text-gray-900 font-mono py-1">{customerDetails?.customerCode || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Mobile</td>
+                  <td className="text-gray-900 py-1">{customerDetails?.mobile || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Email</td>
+                  <td className="text-gray-900 py-1 break-all">{customerDetails?.email || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Nationality</td>
+                  <td className="text-gray-900 py-1">{customerDetails?.nationality || "-"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Stay Details */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-bold uppercase text-gray-700 tracking-wider mb-3 pb-1 border-b border-gray-100">Stay Information</h3>
+            <table className="text-xs w-full text-left space-y-2">
+              <tbody>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1 w-24">Check In</td>
+                  <td className="text-gray-900 font-medium text-success py-1">{formatDate(dates?.checkInDate)}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Check Out</td>
+                  <td className="text-gray-900 font-medium text-warning py-1">{formatDate(dates?.checkOutDate)}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Total Stay</td>
+                  <td className="text-gray-900 py-1">
+                    {dates?.checkInDate && dates?.checkOutDate 
+                      ? `${Math.ceil((new Date(dates.checkOutDate) - new Date(dates.checkInDate)) / 86400000)} Nights` 
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="font-semibold text-gray-500 py-1">Booking Type</td>
+                  <td className="text-gray-900 capitalize py-1">{dates?.bookingType || "-"}</td>
+                </tr>
+                {dates?.purposeOfVisit && (
+                  <tr>
+                    <td className="font-semibold text-gray-500 py-1">Purpose</td>
+                    <td className="text-gray-900 py-1">{dates.purposeOfVisit}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Room Details Table */}
+        <div className="mb-8">
+          <h3 className="text-sm font-bold uppercase text-gray-700 tracking-wider mb-3">Room Information</h3>
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-gray-100 border-b border-gray-300">
+                <th className="p-3 font-semibold text-gray-700">Room Type</th>
+                <th className="p-3 font-semibold text-gray-700">Room Number</th>
+                <th className="p-3 font-semibold text-gray-700 text-center">Adults</th>
+                <th className="p-3 font-semibold text-gray-700 text-center">Children</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.isArray(roomDetails) && roomDetails.length ? (
+                roomDetails.map((room, idx) => (
+                  <tr key={idx} className="border-b border-gray-200">
+                    <td className="p-3 font-medium text-gray-900">{room.roomType || "-"}</td>
+                    <td className="p-3 font-mono text-gray-900">{room.roomNo || "-"}</td>
+                    <td className="p-3 text-center text-gray-900">{room.adults ?? 0}</td>
+                    <td className="p-3 text-center text-gray-900">{room.children ?? 0}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="p-3 text-center text-gray-500">No rooms selected</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Package Details (if present) */}
+        {Array.isArray(packageDetails) && packageDetails.length > 0 && packageDetails.some(pkg => pkg.packageType) && (
+          <div className="mb-8">
+            <h3 className="text-sm font-bold uppercase text-gray-700 tracking-wider mb-3">Package Information</h3>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-gray-100 border-b border-gray-300">
+                  <th className="p-3 font-semibold text-gray-700">Package Type</th>
+                  <th className="p-3 font-semibold text-gray-700 text-center">No. Pax</th>
+                  <th className="p-3 font-semibold text-gray-700 text-center">Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {packageDetails.map((pkg, idx) => (
+                  <tr key={idx} className="border-b border-gray-200">
+                    <td className="p-3 font-medium text-gray-900">{pkg.packageType || "-"}</td>
+                    <td className="p-3 text-center text-gray-900">{pkg.noPax || "-"}</td>
+                    <td className="p-3 text-center text-gray-900">{pkg.packageQuantity || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Financial Details (Billing Summary) */}
+        <div className="grid grid-cols-2 gap-8 mb-8 items-start">
+          {/* Left side: payment info and remarks */}
+          <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+              <h3 className="text-xs font-bold uppercase text-gray-600 tracking-wider mb-2">Payment Details</h3>
+              <table className="text-xs w-full text-left space-y-1">
+                <tbody>
+                  <tr>
+                    <td className="text-gray-500 py-1 w-28">Payment Mode</td>
+                    <td className="text-gray-900 font-semibold py-1">{billing?.paymentMode || "Unspecified"}</td>
+                  </tr>
+                  {billing?.paymentRef && (
+                    <tr>
+                      <td className="text-gray-500 py-1">Payment Reference</td>
+                      <td className="text-gray-900 font-mono py-1">{billing.paymentRef}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {dates?.remarks && (
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                <h4 className="text-xs font-bold uppercase text-gray-600 tracking-wider mb-2">Remarks / Notes</h4>
+                <p className="text-xs text-gray-700 italic whitespace-pre-wrap">"{dates.remarks}"</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right side: billing breakdown */}
+          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h3 className="text-sm font-bold uppercase text-gray-700 tracking-wider mb-4 pb-1 border-b border-gray-200 font-semibold">Charges Summary</h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between text-gray-600">
+                <span>Room Charges (Base Price)</span>
+                <span>{formatCurrency(billing?.totalAmountInput)}</span>
+              </div>
+              
+              {billing?.bookingChargeInput && Number(billing.bookingChargeInput) > 0 && (
+                <div className="flex justify-between text-gray-600">
+                  <span>Booking Charge</span>
+                  <span>{formatCurrency(billing.bookingChargeInput)}</span>
+                </div>
+              )}
+              
+              {billing?.discount && Number(billing.discount) > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Discount ({billing.discount}%)</span>
+                  <span>-{formatCurrency((Number(billing.totalAmountInput) || 0) * (Number(billing.discount) / 100))}</span>
+                </div>
+              )}
+
+              {Array.isArray(billing?.extraCharges) && billing.extraCharges.length > 0 && (
+                <div className="border-t border-gray-200 pt-2 space-y-1">
+                  {billing.extraCharges.map((charge, idx) => (
+                    <div key={idx} className="flex justify-between text-gray-600">
+                      <span>{charge.name || "Extra Charge"}</span>
+                      <span>{formatCurrency(charge.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="border-t border-gray-300 pt-2 flex justify-between font-bold text-gray-900 text-sm">
+                <span>Final Total</span>
+                <span>{formatCurrency(getFinalTotal(billing))}</span>
+              </div>
+
+              <div className="flex justify-between font-semibold text-green-700 pt-1">
+                <span>(-) Paid Amount</span>
+                <span>{formatCurrency(billing?.advanceAmountInput)}</span>
+              </div>
+
+              <div className="border-t-2 border-double border-gray-400 pt-2 flex justify-between font-extrabold text-indigo-900 text-base">
+                <span>Balance Due</span>
+                <span>{formatCurrency(getBalanceDue(billing))}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Terms & Signature Section */}
+        <div className="mt-16 text-[10px] text-gray-500 border-t border-gray-200 pt-6">
+          <div className="grid grid-cols-2 gap-12">
+            <div>
+              <h4 className="font-bold uppercase mb-2">Terms & Conditions</h4>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Please present this voucher along with official ID card at check-in.</li>
+                <li>Standard Check-In time is 2:00 PM and Check-Out time is 12:00 PM.</li>
+                <li>This reservation is non-transferable and non-refundable.</li>
+              </ul>
+            </div>
+            <div className="flex justify-between items-end">
+              <div className="text-center w-36">
+                <div className="border-b border-gray-400 h-10 w-full mb-1"></div>
+                <p className="font-semibold text-gray-600">Guest Signature</p>
+              </div>
+              <div className="text-center w-36">
+                <div className="border-b border-gray-400 h-10 w-full mb-1"></div>
+                <p className="font-semibold text-gray-600">Authorized Signature</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -155,7 +155,7 @@ const BillingSummary = ({
 
         <div className="flex justify-between border-b border-gray-100 pb-2">
           <span className="font-semibold text-red-600">
-            (-) Advance Payment
+            (-) Paid Amount
           </span>
           <span className="font-medium text-red-600">
             ${advanceAmount.toFixed(2)}

@@ -29,7 +29,8 @@ const FieldWithIcon = ({
 );
 
 const BillingInputForm = ({ calculatedCommission }) => {
-  const { register, control, formState: { errors } } = useFormContext();
+  const { register, control, formState: { errors }, watch } = useFormContext();
+  const paymentMode = watch("paymentMode");
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -89,7 +90,7 @@ const BillingInputForm = ({ calculatedCommission }) => {
       {/* Advance Details */}
       <div className="p-6 bg-white rounded-lg shadow-xl">
         <h2 className="text-xl font-semibold text-gray-800 mb-6">
-          Advance Details
+          Payment Details
         </h2>
         <div className="grid lg:grid-cols-2 gap-4">
           <FieldWithIcon
@@ -107,9 +108,58 @@ const BillingInputForm = ({ calculatedCommission }) => {
               <option value="Card Payment">Card Payment</option>
               <option value="Cash">Cash</option>
               <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Other">Other</option>
             </select>
             <FaCreditCard className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
             <FaAngleDown className="absolute right-0 top-0 h-full w-4 mr-3 text-gray-400 pointer-events-none" />
+          </FieldWithIcon>
+
+          {paymentMode === "Other" && (
+            <FieldWithIcon
+              label="Specify Payment Mode"
+              className="col-span-2 lg:col-span-1"
+              error={errors.customPaymentMode}
+            >
+              <input
+                type="text"
+                placeholder="Specify other mode"
+                className={inputClasses + " pl-10"}
+                {...register("customPaymentMode", { required: "Custom payment mode is required" })}
+              />
+              <FaCreditCard className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+            </FieldWithIcon>
+          )}
+
+          <FieldWithIcon
+            label="Booking Status"
+            className="col-span-2 lg:col-span-1"
+            error={errors.paymentStatus}
+          >
+            <select
+              className={inputClasses + " pl-10 appearance-none"}
+              {...register("paymentStatus")}
+            >
+              <option value="pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Postponed">Postponed</option>
+            </select>
+            <FaRegBookmark className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
+            <FaAngleDown className="absolute right-0 top-0 h-full w-4 mr-3 text-gray-400 pointer-events-none" />
+          </FieldWithIcon>
+
+          <FieldWithIcon
+            label="Payment Reference"
+            className="col-span-2 lg:col-span-1"
+            error={errors.paymentRef}
+          >
+            <input
+              type="text"
+              placeholder="Payment Ref No. (e.g. TXN-1234)"
+              className={inputClasses + " pl-10"}
+              {...register("paymentRef")}
+            />
+            <FaRegBookmark className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
           </FieldWithIcon>
 
           <FieldWithIcon
@@ -144,20 +194,20 @@ const BillingInputForm = ({ calculatedCommission }) => {
           </FieldWithIcon>
 
           <FieldWithIcon
-            label="Advance Amount"
+            label="Paid Amount"
             className="col-span-2 lg:col-span-1"
             error={errors.advanceAmountInput}
           >
             <input
               type="text"
-              placeholder="Advance Amount"
+              placeholder="Paid Amount"
               className={inputClasses + " pl-10"}
               {...register("advanceAmountInput", { pattern: { value: /^[0-9.]*$/, message: "Invalid number" } })}
             />
             <FaDollarSign className="absolute left-0 top-0 h-full w-4 ml-3 text-gray-400 pointer-events-none" />
           </FieldWithIcon>
 
-          <FieldWithIcon label="Advance Remarks" className="col-span-2" error={errors.advanceRemarks}>
+          <FieldWithIcon label="Payment Remarks" className="col-span-2" error={errors.advanceRemarks}>
             <input
               type="text"
               placeholder="Remarks"

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { FaSearch, FaFilter, FaPlus, FaEllipsisH, FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { Link } from "react-router";
 import useAxios from "../../components/hooks/useAxios";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import DatePicker from "react-datepicker";
@@ -73,7 +74,9 @@ const BookingList = () => {
   });
 
   // Flatten the array of pages into a single bookings array
-  const bookings = data ? data.pages.flatMap((page) => page.bookings || []) : [];
+  const bookings = useMemo(() => {
+    return data ? data.pages.flatMap((page) => page.bookings || []) : [];
+  }, [data]);
 
   // Automatic load more when scroll reaches bottom
   useEffect(() => {
@@ -407,7 +410,7 @@ const BookingList = () => {
                               <div tabIndex={0} role="button" className="btn btn-ghost btn-outline btn-xs">
                                 <FaEllipsisH />
                               </div>
-                              <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-2xl bg-base-100 rounded-box w-32 border border-base-300">
+                              <ul tabIndex={0} className="dropdown-content z-2 menu p-2 shadow-2xl bg-base-100 rounded-box w-32 border border-base-300">
                                 <li>
                                   <Link to={`/booking-info/${booking._id}`}><FaEye className="text-primary"/> View</Link>
                                 </li>

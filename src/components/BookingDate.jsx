@@ -48,7 +48,7 @@ const FieldWrapper = ({ label, children, required = false, error }) => (
   </div>
 );
 
-const BookingDate = () => {
+const BookingDate = ({ isEdit }) => {
   const { control, register, formState: { errors }, watch } = useFormContext();
   const checkInDate = watch("checkInDate");
 

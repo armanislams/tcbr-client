@@ -13,7 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 const UpdateBooking = () => {
   const { id } = useParams(); // booking id
   const AxiosInstance = useAxios();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const methods = useForm({
@@ -37,6 +37,8 @@ const UpdateBooking = () => {
       discount: "",
       commission: "",
       paymentMode: "",
+      customPaymentMode: "",
+      paymentRef: "",
       paymentStatus: "pending",
       totalAmountInput: "",
       advanceRemarks: "",
@@ -77,7 +79,9 @@ const UpdateBooking = () => {
         discountReason: data.billing?.discountReason || "",
         discount: data.billing?.discount || "",
         commission: data.billing?.commission || "",
-        paymentMode: data.billing?.paymentMode || "",
+        paymentMode: (["Cash", "Card Payment", "Bank Transfer"].includes(data.billing?.paymentMode || "") || !(data.billing?.paymentMode)) ? (data.billing?.paymentMode || "") : "Other",
+        customPaymentMode: (["Cash", "Card Payment", "Bank Transfer"].includes(data.billing?.paymentMode || "") || !(data.billing?.paymentMode)) ? "" : (data.billing?.paymentMode || ""),
+        paymentRef: data.billing?.paymentRef || "",
         paymentStatus: data.billing?.paymentStatus || "pending",
         totalAmountInput: data.billing?.totalAmountInput || "",
         advanceRemarks: data.billing?.advanceRemarks || "",
@@ -100,8 +104,8 @@ const UpdateBooking = () => {
       toast.success("Booking updated successfully!");
       queryClient.invalidateQueries(["booking", id]);
       queryClient.invalidateQueries(["bookings"]);
-      // Optional: navigate away after successful update
-      // navigate(`/booking-info/${id}`);
+      // Navigate to booking-info after successful update
+      navigate(`/booking-info/${id}`);
     },
     onError: (err) => {
       console.error(err);
@@ -135,7 +139,8 @@ const UpdateBooking = () => {
         discountReason: data.discountReason,
         discount: data.discount,
         commission: data.commission,
-        paymentMode: data.paymentMode,
+        paymentMode: data.paymentMode === "Other" ? data.customPaymentMode : data.paymentMode,
+        paymentRef: data.paymentRef || "",
         paymentStatus: data.paymentStatus || 'pending',
         totalAmountInput: data.totalAmountInput,
         advanceRemarks: data.advanceRemarks,

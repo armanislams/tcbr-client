@@ -6,6 +6,7 @@ import Billings from '../../components/Billings/Billings';
 import useAxios from '../../components/hooks/useAxios';
 import { toast } from 'react-toastify';
 import { useForm, FormProvider } from 'react-hook-form';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -44,6 +45,9 @@ const BookingForm = () => {
       discount: "",
       commission: "",
       paymentMode: "",
+      customPaymentMode: "",
+      paymentRef: "",
+      paymentStatus: "pending",
       totalAmountInput: "",
       advanceRemarks: "",
       advanceAmountInput: "",
@@ -101,8 +105,9 @@ const BookingForm = () => {
         discountReason: data.discountReason,
         discount: data.discount,
         commission: data.commission,
-        paymentMode: data.paymentMode,
-        paymentStatus: 'pending',
+        paymentMode: data.paymentMode === "Other" ? data.customPaymentMode : data.paymentMode,
+        paymentRef: data.paymentRef || "",
+        paymentStatus: data.paymentStatus || 'pending',
         totalAmountInput: data.totalAmountInput,
         advanceRemarks: data.advanceRemarks,
         advanceAmountInput: data.advanceAmountInput,

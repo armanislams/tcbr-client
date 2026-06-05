@@ -2,5 +2,43 @@
 @plugin "daisyui";
 nav a.active{
     background-color: rgb(255, 143, 162);
-    
+}
+
+@media print {
+  /* Hide screen-only elements, navbar, sidebar, and action elements */
+  .drawer-side,
+  .navbar,
+  .ToastContainer,
+  button,
+  .btn,
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset layout constraints for full page print area */
+  html,
+  body,
+  #root,
+  .drawer,
+  .drawer-content,
+  main {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure print block displays as expected */
+  .print-only,
+  .print\:block {
+    display: block !important;
+  }
 }
