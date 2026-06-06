@@ -78,7 +78,7 @@ const BookingVoucherPrint = ({ booking }) => {
     return `${cinDay}-${coutDay} ${cinMonth} ${cinYear}`;
   };
 
-  // Build rows for the Zoho Invoice table
+  // Build rows for the Like ZoHo Invoice table
   const tableRows = [];
   let itemCounter = 1;
 
@@ -195,7 +195,7 @@ const BookingVoucherPrint = ({ booking }) => {
 
   return (
     <>
-      {/* PAGE 1: Zoho Invoice Layout */}
+      {/* PAGE 1:  Invoice Layout */}
       <div className="hidden print:block text-gray-800 bg-white p-5 font-sans max-w-4xl mx-auto print-voucher leading-relaxed" style={{ minHeight: "250mm" }}>
         
         {/* Top Header Section */}
@@ -204,7 +204,7 @@ const BookingVoucherPrint = ({ booking }) => {
           {/* Logo & Company Address */}
           <div>
             <div className="flex items-center mb-1.5">
-              <img src="/tcb-logo.png" alt="Tenggol Coral Beach Resort Logo" className="h-10 w-auto" />
+              <img src="/tcb-logo.png" alt="Tenggol Coral Beach Resort Logo" className="h-20 w-auto mb-2" />
             </div>
             
             <div className="text-[10px] text-gray-500 leading-tight font-normal">
@@ -272,7 +272,7 @@ const BookingVoucherPrint = ({ booking }) => {
         <div className="mb-2">
           <table className="w-full text-left border-collapse text-[10px] mt-1">
             <thead>
-              <tr className="bg-[#3d3d3d] text-white">
+              <tr className="bg-[#1e293b] text-white">
                 <th className="py-1 px-2 text-center w-8 font-bold">#</th>
                 <th className="py-1 px-2 font-bold">Item & Description</th>
                 <th className="py-1 px-2 text-right w-14 font-bold">Qty</th>
@@ -355,17 +355,13 @@ const BookingVoucherPrint = ({ booking }) => {
           <div>
             <h4 className="font-bold text-gray-700">Terms & Conditions</h4>
             <ol className="list-decimal pl-4 mt-0.5 text-gray-400 space-y-0.5">
-              <li>Charges of 8% SST is not included in the above quotation.</li>
+              <li>Charges of 8% SST is included in the above quotation.</li>
               <li>Packages included accommodation, meals, 2 way boat transfer & boat dives/snorkeling trips.</li>
             </ol>
           </div>
         </div>
 
-        {/* Page 1 Footer */}
-        <div className="mt-3 text-center text-[8.5px] text-gray-400 border-t border-gray-100 pt-2">
-          <p>Crafted with ease using <strong className="text-gray-400">Zoho Invoice</strong></p>
-          <p className="mt-0.5">Visit zoho.com/invoice to create truly professional invoices</p>
-        </div>
+       
 
       </div>
 
@@ -427,11 +423,7 @@ const BookingVoucherPrint = ({ booking }) => {
           </div>
         </div>
 
-        {/* Page 2 Footer */}
-        <div className="mt-16 text-center text-[9px] text-gray-400 border-t border-gray-100 pt-3">
-          <p>Crafted with ease using <strong className="text-gray-400">Zoho Invoice</strong></p>
-          <p className="mt-0.5">Visit zoho.com/invoice to create truly professional invoices</p>
-        </div>
+      
 
       </div>
     </>

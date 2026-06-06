@@ -16,8 +16,10 @@ const styles = StyleSheet.create({
   },
   logoImage: {
     width: 140,
-    height: 40,
-    marginBottom: 4,
+    height: 120,
+    marginBottom: 6,
+    objectFit: 'cover',
+    backgroundColor: 'white'
   },
   companyDetails: {
     fontSize: 8,
@@ -61,7 +63,8 @@ const styles = StyleSheet.create({
     borderRightWidth: 4,
     borderRightColor: '#64748b',
     borderRightStyle: 'solid',
-    padding: '4 8',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     marginTop: 6,
     alignItems: 'flex-end',
   },
@@ -69,6 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: '#94a3b8',
     fontWeight: 'bold',
+    fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
     textAlign: 'right',
   },
@@ -112,7 +116,7 @@ const styles = StyleSheet.create({
   },
   metaDetails: {
     width: '45%',
-    alignItems: 'end',
+    alignItems: 'flex-end',
   },
   metaRow: {
     flexDirection: 'row',
@@ -136,15 +140,17 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#3d3d3d',
+    backgroundColor: '#1e293b',
     color: '#ffffff',
     fontWeight: 'bold',
     fontFamily: 'Helvetica-Bold',
-    padding: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 4,
   },
   tableHeaderCell: {
     fontSize: 8,
     fontWeight: 'bold',
+    fontFamily: 'Helvetica-Bold',
     color: '#ffffff',
   },
   tableRow: {
@@ -152,7 +158,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     borderBottomStyle: 'solid',
-    padding: '4 4',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
   colIndex: { width: '5%', textAlign: 'center' },
   colDesc: { width: '55%' },
@@ -166,7 +173,7 @@ const styles = StyleSheet.create({
   },
   rowDesc: {
     fontSize: 7,
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 1,
   },
   calcSection: {
@@ -232,9 +239,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#f1f5f9',
-    padding: '3 6',
+    paddingVertical: 5,
+    paddingHorizontal: 6,
     borderRadius: 2,
     marginTop: 3,
+    alignItems: 'center',
   },
   calcLabelBalance: {
     fontWeight: 'bold',
@@ -260,7 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   notesContent: {
-    color: '#94a3b8',
+    color: '#64748b',
     marginBottom: 4,
   },
   termsList: {
@@ -272,11 +281,11 @@ const styles = StyleSheet.create({
   },
   termsBullet: {
     width: 10,
-    color: '#94a3b8',
+    color: '#64748b',
   },
   termsText: {
     flex: 1,
-    color: '#94a3b8',
+    color: '#64748b',
   },
   footer: {
     borderTopWidth: 1,
@@ -315,7 +324,7 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: '#fafafa',
     marginTop: 10,
-    width: '280',
+    width: 280,
   },
   termsTableTitle: {
     fontWeight: 'bold',
@@ -669,7 +678,7 @@ const BookingVoucherPDF = ({ booking }) => {
             <View style={styles.termsList}>
               <View style={styles.termsItem}>
                 <Text style={styles.termsBullet}>1.</Text>
-                <Text style={styles.termsText}>Charges of 8% SST is not included in the above quotation.</Text>
+                <Text style={styles.termsText}>Charges of 8% SST is included in the above quotation.</Text>
               </View>
               <View style={styles.termsItem}>
                 <Text style={styles.termsBullet}>2.</Text>
@@ -677,12 +686,6 @@ const BookingVoucherPDF = ({ booking }) => {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Page Footer */}
-        <View style={styles.footer}>
-          <Text>Crafted with ease using <Text style={styles.footerBold}>Zoho Invoice</Text></Text>
-          <Text style={{ marginTop: 1 }}>Visit zoho.com/invoice to create truly professional invoices</Text>
         </View>
 
       </Page>
@@ -710,7 +713,7 @@ const BookingVoucherPDF = ({ booking }) => {
           </View>
           <View style={styles.page2ListItem}>
             <Text style={[styles.termsBullet, { fontSize: 8.5 }]}>7.</Text>
-            <Text style={styles.page2ListText}>Snorkeling equipment rental is included in the package. A deposit of RM 50.00 is require once you collec the snorkeling equipment, the deposit will be return once the snorkeling equipment is returned.</Text>
+            <Text style={styles.page2ListText}>Snorkeling equipment rental is included in the package. A deposit of RM 50.00 is require once you collect the snorkeling equipment, the deposit will be return once the snorkeling equipment is returned.</Text>
           </View>
           <View style={styles.page2ListItem}>
             <Text style={[styles.termsBullet, { fontSize: 8.5 }]}>8.</Text>
@@ -779,12 +782,6 @@ const BookingVoucherPDF = ({ booking }) => {
           <Text>* Cheque payment should be crossed and made payable to "OCEAN XPERIENCE SDN BHD."</Text>
           <Text>* Kindly indicate our invoice number on your remittance.</Text>
           <Text>* Please report any discrepancies within 7 days from the receipt of the invoice.</Text>
-        </View>
-
-        {/* Page Footer */}
-        <View style={styles.footer}>
-          <Text>Crafted with ease using <Text style={styles.footerBold}>Zoho Invoice</Text></Text>
-          <Text style={{ marginTop: 1 }}>Visit zoho.com/invoice to create truly professional invoices</Text>
         </View>
 
       </Page>
