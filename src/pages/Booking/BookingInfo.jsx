@@ -27,8 +27,11 @@ import {
   FaTrash,
   FaCheck,
   FaRegBookmark,
+  FaDownload,
 } from "react-icons/fa";
 import BookingVoucherPrint from "../../components/BookingVoucherPrint";
+import { pdf } from '@react-pdf/renderer';
+import BookingVoucherPDF from "../../components/BookingVoucherPDF";
 
 const BookingInfo = () => {
   const { id } = useParams();
@@ -226,7 +229,44 @@ const BookingInfo = () => {
   };
 
   const handlePrint = () => {
+    const invNo = booking?.dates?.bookingReference || booking?._id?.substring(0, 8).toUpperCase() || "Invoice";
+    const originalTitle = document.title;
+    
+    // Remove any illegal filename characters (like slashes, colons, stars, etc.) to ensure safety across OS print drivers
+    const cleanInvNo = invNo.replace(/[/\\?%*:|"<>.#]/g, '_');
+    
+    document.title = cleanInvNo;
     window.print();
+    
+    // Restore the original tab title after a short delay so the print job captures it
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
+
+  const handleDownloadPDF = async () => {
+    toast.info("Generating PDF download...");
+    try {
+      const doc = <BookingVoucherPDF booking={booking} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const invNo = booking?.dates?.bookingReference || booking?._id?.substring(0, 8).toUpperCase() || "Invoice";
+      const cleanInvNo = invNo.replace(/[/\\?%*:|"<>.#]/g, '_');
+      
+      link.download = `${cleanInvNo}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      toast.error("Failed to generate PDF. Please use the Print Details option instead.");
+    }
   };
 
   const handleConfirm = async () => {
@@ -807,9 +847,11 @@ const BookingInfo = () => {
                   </div>
                   <div className="divider my-1"></div>
                   <div className="flex justify-between items-center bg-primary bg-opacity-10 p-3 rounded-lg">
-                    <span className="font-bold text-white">Balance Due</span>
+                    <span className="font-bold text-white">
+                      {getBalanceDue(billing) < 0 ? "Extra Paid" : "Balance Due"}
+                    </span>
                     <span className="font-bold text-xl text-white">
-                      {formatCurrency(getBalanceDue(billing))}
+                      {formatCurrency(getBalanceDue(billing) < 0 ? Math.abs(getBalanceDue(billing)) : getBalanceDue(billing))}
                     </span>
                   </div>
                   {getBalanceDue(billing) > 0 && (
@@ -888,6 +930,10 @@ const BookingInfo = () => {
                       )}
                     </button>
                   )}
+
+                  <button onClick={handleDownloadPDF} className="btn btn-primary btn-block gap-2">
+                    <FaDownload /> Download PDF
+                  </button>
 
                   <button onClick={handlePrint} className="btn btn-outline btn-block gap-2">
                     <FaPrint /> Print Details

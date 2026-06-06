@@ -203,26 +203,8 @@ const BookingVoucherPrint = ({ booking }) => {
           
           {/* Logo & Company Address */}
           <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <svg className="w-14 h-9" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 30 C 30 10, 70 10, 90 25 C 100 20, 105 15, 110 10 C 108 20, 108 30, 110 40 C 105 35, 100 30, 90 25 C 70 45, 30 45, 10 30 Z" fill="#00a896" />
-                <path d="M50 20 C 55 12, 65 12, 60 20 Z" fill="#028090" />
-                <path d="M60 38 C 65 45, 75 45, 70 38 Z" fill="#028090" />
-                <circle cx="35" cy="25" r="1.5" fill="white" />
-                <circle cx="45" cy="23" r="1.5" fill="white" />
-                <circle cx="55" cy="24" r="1.5" fill="white" />
-                <circle cx="65" cy="26" r="1.5" fill="white" />
-                <circle cx="75" cy="28" r="1.5" fill="white" />
-                <circle cx="40" cy="30" r="1.5" fill="white" />
-                <circle cx="50" cy="31" r="1.5" fill="white" />
-                <circle cx="60" cy="29" r="1.5" fill="white" />
-                <circle cx="70" cy="31" r="1.5" fill="white" />
-              </svg>
-              <div className="text-left">
-                <div className="text-[12px] font-black tracking-[0.2em] text-[#00a896] uppercase leading-none">TENGGOL</div>
-                <div className="text-[8.5px] font-bold tracking-[0.15em] text-[#028090] uppercase mt-0.5 leading-none">CORAL BEACH</div>
-                <div className="text-[6.5px] font-semibold tracking-[0.3em] text-[#02c39a] uppercase mt-0.5 leading-none">RESORT</div>
-              </div>
+            <div className="flex items-center mb-1.5">
+              <img src="/tcb-logo.png" alt="Tenggol Coral Beach Resort Logo" className="h-10 w-auto" />
             </div>
             
             <div className="text-[10px] text-gray-500 leading-tight font-normal">
@@ -245,9 +227,11 @@ const BookingVoucherPrint = ({ booking }) => {
             </p>
             
             <div className="mt-2 bg-gray-50 border-r-4 border-slate-500 py-1 px-2.5 inline-block text-right">
-              <span className="block text-[9px] text-gray-400 font-bold uppercase tracking-wider">Balance Due</span>
+              <span className="block text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                {balanceDue < 0 ? "Extra Paid" : "Balance Due"}
+              </span>
               <span className="text-base font-bold text-gray-900 mt-0.5 block">
-                MYR {formatCurrency(balanceDue)}
+                MYR {formatCurrency(balanceDue < 0 ? Math.abs(balanceDue) : balanceDue)}
               </span>
             </div>
           </div>
@@ -346,8 +330,8 @@ const BookingVoucherPrint = ({ booking }) => {
             </div>
 
             <div className="flex justify-between font-bold text-gray-950 bg-gray-100 p-1.5 rounded text-[11.5px] items-center">
-              <span>Balance Due</span>
-              <span>MYR {formatCurrency(balanceDue)}</span>
+              <span>{balanceDue < 0 ? "Extra Paid" : "Balance Due"}</span>
+              <span>MYR {formatCurrency(balanceDue < 0 ? Math.abs(balanceDue) : balanceDue)}</span>
             </div>
           </div>
         </div>
