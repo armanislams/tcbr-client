@@ -1,9 +1,45 @@
-import React, { useMemo } from "react";
-import { useWatch } from "react-hook-form";
+import React, { useMemo, useEffect } from "react";
+import { useWatch, useFormContext } from "react-hook-form";
 import BillingInputForm from "./BillingInputForm";
 import BillingSummary from "./BillingSummary";
 
 const Billings = () => {
+  const { setValue } = useFormContext();
+
+  // Watch rooms and packages to auto-calculate base price total
+  const roomsWatch = useWatch({ name: "rooms" });
+  const packagesWatch = useWatch({ name: "packages" });
+
+  useEffect(() => {
+    let roomsTotal = 0;
+    let hasPrices = false;
+    if (Array.isArray(roomsWatch) && roomsWatch.length > 0) {
+      roomsWatch.forEach(room => {
+        const price = parseFloat(room.price);
+        if (!isNaN(price)) {
+          roomsTotal += price;
+          hasPrices = true;
+        }
+      });
+    }
+
+    let packagesTotal = 0;
+    if (Array.isArray(packagesWatch) && packagesWatch.length > 0) {
+      packagesWatch.forEach(pkg => {
+        const price = parseFloat(pkg.price);
+        if (!isNaN(price)) {
+          packagesTotal += price;
+          hasPrices = true;
+        }
+      });
+    }
+
+    if (hasPrices) {
+      const grandTotal = roomsTotal + packagesTotal;
+      setValue('totalAmountInput', grandTotal.toString(), { shouldValidate: true, shouldDirty: true });
+    }
+  }, [roomsWatch, packagesWatch, setValue]);
+
   // Watch all relevant fields for calculation
   const watchedValues = useWatch({
     name: [
@@ -39,9 +75,6 @@ const Billings = () => {
     const finalTotal =
       discountedSubtotal + parsedBookingCharge + serviceChargeAmount;
     const commissionAmount = parsedBaseAmount * commissionRate;
-
-    // Total including extra charges (calculated in Summary, but good to have here if needed)
-    // For now, we follow original logic where balanceDue included extra charges in summary but here we calculate core billing
     const balanceDue = finalTotal - parsedAdvanceAmount;
 
     return {

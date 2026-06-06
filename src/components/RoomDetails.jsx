@@ -2,6 +2,28 @@ import React, { useEffect } from 'react';
 import { FaHome, FaAngleDown, FaUsers, FaUser, FaPlus, FaTimes, FaDollarSign } from 'react-icons/fa';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
+// Common styling
+const inputClasses =
+  "w-full p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm";
+const labelClasses = "text-sm font-medium text-gray-700 mb-1";
+
+// --- Reusable Input/Select Field Wrapper ---
+const FieldWithIcon = ({
+  label,
+  children,
+  required = false,
+  className = "flex flex-col flex-1 min-w-0",
+  error
+}) => (
+  <div className={className}>
+    <label className={labelClasses}>
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">{children}</div>
+    {error && <span className="text-xs text-red-500 mt-1">{error.message}</span>}
+  </div>
+);
+
 const RoomDetails = () => {
   const { control, register, formState: { errors }, watch, setValue } = useFormContext();
 
@@ -20,33 +42,7 @@ const RoomDetails = () => {
     name: "rooms"
   });
 
-  // Watch rooms array to auto-calculate sum of room prices
-  const roomsWatch = useWatch({
-    control,
-    name: "rooms"
-  });
 
-  useEffect(() => {
-    let total = 0;
-    let hasRoomPrices = false;
-    if (roomsWatch && roomsWatch.length > 0) {
-      roomsWatch.forEach(room => {
-        const price = parseFloat(room.price);
-        if (!isNaN(price)) {
-          total += price;
-          hasRoomPrices = true;
-        }
-      });
-    }
-    if (hasRoomPrices) {
-      setValue('totalAmountInput', total.toString(), { shouldValidate: true, shouldDirty: true });
-    }
-  }, [roomsWatch, setValue]);
-
-  // Common styling
-  const inputClasses =
-    "w-full p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm";
-  const labelClasses = "text-sm font-medium text-gray-700 mb-1";
 
   // Helper to create a new room object structure
   const newRoomTemplate = {
@@ -62,22 +58,6 @@ const RoomDetails = () => {
     insert(index + 1, { ...currentRoomData });
   };
 
-  // --- Reusable Input/Select Field Wrapper ---
-  const FieldWithIcon = ({
-    label,
-    children,
-    required = false,
-    className = "flex flex-col flex-1 min-w-0",
-    error
-  }) => (
-    <div className={className}>
-      <label className={labelClasses}>
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">{children}</div>
-      {error && <span className="text-xs text-red-500 mt-1">{error.message}</span>}
-    </div>
-  );
 
   // --- Component JSX ---
   return (

@@ -23,28 +23,7 @@ const PackageDetails = () => {
     name: "packages"
   });
 
-  // Watch packages to calculate total price
-  const packages = useWatch({
-    control,
-    name: "packages"
-  });
 
-  // Calculate total price when packages change
-  useEffect(() => {
-    let total = 0;
-    if (packages && packages.length > 0) {
-      packages.forEach(pkg => {
-        const price = parseFloat(pkg.price);
-        if (!isNaN(price)) {
-          total += price;
-        }
-      });
-    }
-    // Update the base total amount in the form
-    if (total > 0) {
-      setValue('totalAmountInput', total.toString(), { shouldValidate: true, shouldDirty: true });
-    }
-  }, [packages, setValue]);
 
   const newPackageTemplate = {
     packageType: "",

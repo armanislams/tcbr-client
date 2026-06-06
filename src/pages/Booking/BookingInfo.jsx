@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxios from "../../components/hooks/useAxios";
@@ -49,6 +50,17 @@ const BookingInfo = () => {
     },
     enabled: !!id,
   });
+
+  // Set tab title to the booking reference / invoice number
+  useEffect(() => {
+    if (booking) {
+      const invNo = booking.dates?.bookingReference || booking._id?.substring(0, 8).toUpperCase() || "Invoice";
+      document.title = invNo;
+    }
+    return () => {
+      document.title = "tcbr-project";
+    };
+  }, [booking]);
 
   // Confirm Booking Mutation
   const markAsPaidMutation = useMutation({
@@ -164,13 +176,34 @@ const BookingInfo = () => {
     return `RM ${numAmount.toFixed(2)}`;
   };
 
-  const getBalanceDue = (billing) => {
-    if (billing?.calculations?.balanceDue !== undefined) {
-      return billing.calculations.balanceDue;
+  const getBillingCalculations = (billing) => {
+    const base = Number(billing?.totalAmountInput) || 0;
+    const disc = Number(billing?.discount) || 0;
+    const discounted = base * (1 - disc / 100);
+    const charge = Number(billing?.bookingChargeInput) || 0;
+    const sst = discounted * 0.08;
+    
+    let extra = 0;
+    if (Array.isArray(billing?.extraCharges)) {
+      extra = billing.extraCharges.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
     }
-    const total = Number(billing?.totalAmountInput) || 0;
-    const advance = Number(billing?.advanceAmountInput) || 0;
-    return total - advance;
+    
+    const finalTotal = discounted + charge + sst + extra;
+    const paid = Number(billing?.advanceAmountInput) || 0;
+    const balanceDue = finalTotal - paid;
+    
+    return {
+      discountVal: base * (disc / 100),
+      bookingCharge: charge,
+      sstVal: sst,
+      extraChargesSum: extra,
+      finalTotal,
+      balanceDue
+    };
+  };
+
+  const getBalanceDue = (billing) => {
+    return getBillingCalculations(billing).balanceDue;
   };
 
 
@@ -394,7 +427,7 @@ const BookingInfo = () => {
     );
   }
 
-  const { customerDetails, roomDetails, packageDetails, dates, billing } = booking;
+  const { customerDetails, roomDetails, packageDetails, dates, billing, modificationHistory } = booking;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-base-200 via-base-100 to-base-200 print:bg-white print:p-0">
@@ -704,27 +737,69 @@ const BookingInfo = () => {
                 </h2>
                 <div className="divider my-2"></div>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total Amount</span>
-                    <span className="font-semibold text-lg">
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>Base Amount</span>
+                    <span className="font-semibold text-gray-700">
                       {formatCurrency(billing?.totalAmountInput)}
                     </span>
                   </div>
+
+                  {getBillingCalculations(billing).discountVal > 0 && (
+                    <div className="flex justify-between items-center text-sm text-rose-500">
+                      <span>Discount ({billing.discount}%)</span>
+                      <span className="font-semibold">
+                        -{formatCurrency(getBillingCalculations(billing).discountVal)}
+                      </span>
+                    </div>
+                  )}
+
+                  {getBillingCalculations(billing).bookingCharge > 0 && (
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>Booking Charge</span>
+                      <span className="font-semibold text-gray-700">
+                        +{formatCurrency(getBillingCalculations(billing).bookingCharge)}
+                      </span>
+                    </div>
+                  )}
+
+                  {getBillingCalculations(billing).extraChargesSum > 0 && (
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>Extra Charges</span>
+                      <span className="font-semibold text-gray-700">
+                        +{formatCurrency(getBillingCalculations(billing).extraChargesSum)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-sm text-gray-500 border-b border-gray-100 pb-2">
+                    <span>SST (8%)</span>
+                    <span className="font-semibold text-gray-700">
+                      +{formatCurrency(getBillingCalculations(billing).sstVal)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 font-semibold">Final Total</span>
+                    <span className="font-bold text-lg text-primary">
+                      {formatCurrency(getBillingCalculations(billing).finalTotal)}
+                    </span>
+                  </div>
+
                   {billing?.paymentMode && (
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <span>Payment Mode</span>
-                      <span className="font-medium">{billing.paymentMode}</span>
+                      <span className="font-medium text-gray-700">{billing.paymentMode}</span>
                     </div>
                   )}
                   {billing?.paymentRef && (
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <span>Payment Reference</span>
-                      <span className="font-medium font-mono bg-base-200 px-1.5 py-0.5 rounded text-xs select-all">
+                      <span className="font-medium font-mono bg-base-200 px-1.5 py-0.5 rounded text-xs select-all text-gray-700">
                         {billing.paymentRef}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center border-t border-gray-100 pt-2">
                     <span className="text-gray-600">Paid Amount</span>
                     <span className="font-semibold text-success">
                       {formatCurrency(billing?.advanceAmountInput)}
@@ -841,6 +916,94 @@ const BookingInfo = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Modification History Logs (Admin Audits) */}
+        {Array.isArray(modificationHistory) && modificationHistory.length > 0 && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="card bg-base-100 shadow-lg border border-base-300 mt-6"
+          >
+            <div className="card-body">
+              <h2 className="card-title text-xl flex items-center gap-2 text-primary">
+                <FaRegBookmark />
+                Modification History Log
+              </h2>
+              <div className="divider my-2"></div>
+              
+              <div className="space-y-4">
+                {modificationHistory.map((history, idx) => (
+                  <div key={idx} className="border-l-4 border-info bg-base-200 p-4 rounded-r-lg space-y-2 text-sm">
+                    <div className="flex justify-between items-center text-xs text-gray-500 font-semibold">
+                      <span>Modified by: <span className="text-gray-800 font-bold">{history.modifiedBy}</span></span>
+                      <span>{new Date(history.modifiedAt).toLocaleString("en-GB")}</span>
+                    </div>
+                    
+                    {/* Render specific details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-base-100 p-3 rounded border border-base-300 mt-2">
+                      {history.changes?.dates && (
+                        <div>
+                          <p className="font-bold text-primary mb-1">Timeline Dates Updated</p>
+                          <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
+                            {Object.entries(history.changes.dates).map(([key, val]) => (
+                              <li key={key}>
+                                <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>{" "}
+                                <span className="line-through text-red-500">{val.old || "-"}</span>{" "}
+                                <span className="text-gray-400 font-bold">➔</span>{" "}
+                                <span className="text-success font-semibold">{val.new || "-"}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {history.changes?.billing && (
+                        <div>
+                          <p className="font-bold text-primary mb-1">Billing Details Updated</p>
+                          <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
+                            {Object.entries(history.changes.billing).map(([key, val]) => (
+                              <li key={key}>
+                                <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>{" "}
+                                <span className="line-through text-red-500">{val.old || "-"}</span>{" "}
+                                <span className="text-gray-400 font-bold">➔</span>{" "}
+                                <span className="text-success font-semibold">{val.new || "-"}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {history.changes?.rooms && (
+                        <div className="md:col-span-2 border-t border-base-200 pt-2 mt-2">
+                          <p className="font-bold text-primary mb-1">Room Setup Modified</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                            <div className="bg-base-200/50 p-2 rounded">
+                              <p className="text-xs text-gray-500 font-bold mb-1">Old Setup:</p>
+                              <ul className="list-disc pl-4 text-gray-600 space-y-0.5">
+                                {history.changes.rooms.old?.map((r, i) => (
+                                  <li key={i}>{r.roomNo} ({r.roomType}) - Price: RM {r.price || 0}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="bg-success/5 p-2 rounded border border-success/15">
+                              <p className="text-xs text-success font-bold mb-1">New Setup:</p>
+                              <ul className="list-disc pl-4 text-success font-semibold space-y-0.5">
+                                {history.changes.rooms.new?.map((r, i) => (
+                                  <li key={i}>{r.roomNo} ({r.roomType}) - Price: RM {r.price || 0}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div> {/* ends print:hidden screen view wrapper */}
 
       {/* Premium Print-Only Invoice Voucher */}

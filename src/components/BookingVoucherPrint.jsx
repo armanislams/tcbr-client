@@ -1,4 +1,4 @@
-import React from "react";
+
 
 const BookingVoucherPrint = ({ booking }) => {
   if (!booking) return null;
@@ -16,26 +16,27 @@ const BookingVoucherPrint = ({ booking }) => {
     return numAmount.toFixed(2);
   };
 
-  const getBalanceDue = (billing) => {
-    if (billing?.calculations?.balanceDue !== undefined) {
-      return billing.calculations.balanceDue;
-    }
-    const total = Number(billing?.totalAmountInput) || 0;
-    const advance = Number(billing?.advanceAmountInput) || 0;
-    return total - advance;
-  };
-
   const getFinalTotal = (billing) => {
     const base = Number(billing?.totalAmountInput) || 0;
     const disc = Number(billing?.discount) || 0;
     const discounted = base * (1 - disc / 100);
     const charge = Number(billing?.bookingChargeInput) || 0;
+    const sst = discounted * 0.08;
     
     let extra = 0;
     if (Array.isArray(billing?.extraCharges)) {
       extra = billing.extraCharges.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
     }
-    return discounted + charge + extra;
+    return discounted + charge + sst + extra;
+  };
+
+  const getBalanceDue = (billing) => {
+    if (billing?.calculations?.balanceDue !== undefined) {
+      return billing.calculations.balanceDue;
+    }
+    const total = getFinalTotal(billing);
+    const advance = Number(billing?.advanceAmountInput) || 0;
+    return total - advance;
   };
 
   const getNights = () => {
@@ -176,27 +177,34 @@ const BookingVoucherPrint = ({ booking }) => {
   }
 
   // Financial calculations
-  const subtotalBeforeDiscount = tableRows.reduce((sum, row) => sum + row.amount, 0);
-  const discountVal = (Number(billing?.totalAmountInput) || 0) * ((Number(billing?.discount) || 0) / 100);
+  const base = Number(billing?.totalAmountInput) || 0;
+  const disc = Number(billing?.discount) || 0;
+  const discountVal = base * (disc / 100);
+  const discountedSubtotal = base * (1 - disc / 100);
+  
+  const charge = Number(billing?.bookingChargeInput) || 0;
+  let extra = 0;
+  if (Array.isArray(billing?.extraCharges)) {
+    extra = billing.extraCharges.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+  }
+  
+  const subTotalBeforeDiscountAndSST = base + charge + extra;
+  const sstAmount = discountedSubtotal * 0.08;
   const finalTotal = getFinalTotal(billing);
-
-  const sstRate = 0.08;
-  const subTotalExcludingSST = finalTotal / (1 + sstRate);
-  const sstAmount = finalTotal - subTotalExcludingSST;
   const balanceDue = getBalanceDue(billing);
 
   return (
     <>
       {/* PAGE 1: Zoho Invoice Layout */}
-      <div className="hidden print:block text-gray-800 bg-white p-8 font-sans max-w-4xl mx-auto print-voucher leading-relaxed">
+      <div className="hidden print:block text-gray-800 bg-white p-5 font-sans max-w-4xl mx-auto print-voucher leading-relaxed" style={{ minHeight: "250mm" }}>
         
         {/* Top Header Section */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-2">
           
           {/* Logo & Company Address */}
           <div>
-            <div className="flex items-center gap-4 mb-4">
-              <svg className="w-16 h-10" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div className="flex items-center gap-3 mb-1.5">
+              <svg className="w-14 h-9" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 30 C 30 10, 70 10, 90 25 C 100 20, 105 15, 110 10 C 108 20, 108 30, 110 40 C 105 35, 100 30, 90 25 C 70 45, 30 45, 10 30 Z" fill="#00a896" />
                 <path d="M50 20 C 55 12, 65 12, 60 20 Z" fill="#028090" />
                 <path d="M60 38 C 65 45, 75 45, 70 38 Z" fill="#028090" />
@@ -211,19 +219,19 @@ const BookingVoucherPrint = ({ booking }) => {
                 <circle cx="70" cy="31" r="1.5" fill="white" />
               </svg>
               <div className="text-left">
-                <div className="text-[13px] font-black tracking-[0.25em] text-[#00a896] uppercase leading-none">TENGGOL</div>
-                <div className="text-[9px] font-bold tracking-[0.18em] text-[#028090] uppercase mt-0.5 leading-none">CORAL BEACH</div>
-                <div className="text-[7px] font-semibold tracking-[0.35em] text-[#02c39a] uppercase mt-0.5 leading-none">RESORT</div>
+                <div className="text-[12px] font-black tracking-[0.2em] text-[#00a896] uppercase leading-none">TENGGOL</div>
+                <div className="text-[8.5px] font-bold tracking-[0.15em] text-[#028090] uppercase mt-0.5 leading-none">CORAL BEACH</div>
+                <div className="text-[6.5px] font-semibold tracking-[0.3em] text-[#02c39a] uppercase mt-0.5 leading-none">RESORT</div>
               </div>
             </div>
             
-            <div className="text-[10.5px] text-gray-500 leading-relaxed font-normal">
-              <p className="font-bold text-gray-800 text-[12px]">Tenggol Coral Beach Resort</p>
-              <p className="text-[9.5px] text-gray-400">(Dimiliki oleh : Ocean Xperience Sdn Bhd)</p>
+            <div className="text-[10px] text-gray-500 leading-tight font-normal">
+              <p className="font-bold text-gray-800 text-[11px]">Tenggol Coral Beach Resort</p>
+              <p className="text-[9px] text-gray-400">(Dimiliki oleh : Ocean Xperience Sdn Bhd)</p>
               <p>Lot 7, Jalan Ampang Utama 2/2 Off Jalan Ampang,</p>
               <p>Ampang Selangor 68000</p>
               <p>Malaysia</p>
-              <p className="mt-1 text-gray-700">603 4251 8332</p>
+              <p className="text-gray-700">603 4251 8332</p>
               <p className="text-gray-700">account@tenggol.com.my</p>
               <p className="text-gray-700">www.tenggol.com.my</p>
             </div>
@@ -231,14 +239,14 @@ const BookingVoucherPrint = ({ booking }) => {
 
           {/* Invoice Header Details */}
           <div className="text-right">
-            <h1 className="text-[34px] font-light text-gray-700 tracking-wide leading-none">Invoice</h1>
-            <p className="text-xs text-gray-600 font-bold mt-1.5 font-mono">
+            <h1 className="text-[30px] font-light text-gray-700 tracking-wide leading-none">Invoice</h1>
+            <p className="text-[11px] text-gray-600 font-bold mt-1 font-mono">
               # {dates?.bookingReference || booking._id?.substring(0, 8).toUpperCase()}
             </p>
             
-            <div className="mt-6 bg-gray-50 border-r-4 border-slate-500 py-2.5 px-4 inline-block text-right">
-              <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider">Balance Due</span>
-              <span className="text-xl font-bold text-gray-900 mt-1 block">
+            <div className="mt-2 bg-gray-50 border-r-4 border-slate-500 py-1 px-2.5 inline-block text-right">
+              <span className="block text-[9px] text-gray-400 font-bold uppercase tracking-wider">Balance Due</span>
+              <span className="text-base font-bold text-gray-900 mt-0.5 block">
                 MYR {formatCurrency(balanceDue)}
               </span>
             </div>
@@ -247,16 +255,16 @@ const BookingVoucherPrint = ({ booking }) => {
         </div>
 
         {/* Bill To & Dates Metadata Section */}
-        <div className="flex justify-between items-end border-b border-gray-200 pb-4 mb-6">
+        <div className="flex justify-between items-end border-b border-gray-200 pb-1 mb-2">
           <div>
-            <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5">Bill To</span>
-            <p className="font-bold text-gray-900 text-[13px]">{customerDetails?.name || "-"}</p>
-            {customerDetails?.mobile && <p className="text-[11px] text-gray-500 mt-0.5">Tel: {customerDetails.mobile}</p>}
-            {customerDetails?.email && <p className="text-[11px] text-gray-500">{customerDetails.email}</p>}
+            <span className="block text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Bill To</span>
+            <p className="font-bold text-gray-900 text-[12px]">{customerDetails?.name || "-"}</p>
+            {customerDetails?.mobile && <p className="text-[10px] text-gray-500">Tel: {customerDetails.mobile}</p>}
+            {customerDetails?.email && <p className="text-[10px] text-gray-500">{customerDetails.email}</p>}
           </div>
 
           {/* Invoice Dates info list */}
-          <div className="text-right text-[11px] space-y-1.5 w-64">
+          <div className="text-right text-[10px] space-y-0.5 w-64">
             <div className="flex justify-between">
               <span className="text-gray-400">Invoice Date :</span>
               <span className="font-semibold text-gray-800">{formatDate(dates?.bookingDate)}</span>
@@ -277,30 +285,30 @@ const BookingVoucherPrint = ({ booking }) => {
         </div>
 
         {/* Items Table */}
-        <div className="mb-6">
-          <table className="w-full text-left border-collapse text-[11px] mt-2">
+        <div className="mb-2">
+          <table className="w-full text-left border-collapse text-[10px] mt-1">
             <thead>
               <tr className="bg-[#3d3d3d] text-white">
-                <th className="p-2.5 text-center w-10 font-bold">#</th>
-                <th className="p-2.5 font-bold">Item & Description</th>
-                <th className="p-2.5 text-right w-16 font-bold">Qty</th>
-                <th className="p-2.5 text-right w-24 font-bold">Rate</th>
-                <th className="p-2.5 text-right w-24 font-bold">Amount</th>
+                <th className="py-1 px-2 text-center w-8 font-bold">#</th>
+                <th className="py-1 px-2 font-bold">Item & Description</th>
+                <th className="py-1 px-2 text-right w-14 font-bold">Qty</th>
+                <th className="py-1 px-2 text-right w-20 font-bold">Rate</th>
+                <th className="py-1 px-2 text-right w-20 font-bold">Amount</th>
               </tr>
             </thead>
             <tbody>
               {tableRows.map((row, idx) => (
                 <tr key={idx} className="border-b border-gray-200">
-                  <td className="p-2.5 text-center align-top text-gray-400">{row.index}</td>
-                  <td className="p-2.5 align-top">
+                  <td className="py-1 px-2 text-center align-top text-gray-400">{row.index}</td>
+                  <td className="py-1 px-2 align-top">
                     <p className="font-bold text-gray-800">{row.title}</p>
                     {row.descriptions.map((desc, i) => (
-                      <p key={i} className="text-gray-400 mt-0.5 text-[10px] leading-relaxed font-normal">{desc}</p>
+                      <p key={i} className="text-gray-400 mt-0 text-[9.5px] leading-normal font-normal">{desc}</p>
                     ))}
                   </td>
-                  <td className="p-2.5 text-right align-top text-gray-800">{row.qty}</td>
-                  <td className="p-2.5 text-right align-top text-gray-800">{formatCurrency(row.rate)}</td>
-                  <td className="p-2.5 text-right align-top text-gray-800 font-medium">{formatCurrency(row.amount)}</td>
+                  <td className="py-1 px-2 text-right align-top text-gray-800">{row.qty}</td>
+                  <td className="py-1 px-2 text-right align-top text-gray-800">{formatCurrency(row.rate)}</td>
+                  <td className="py-1 px-2 text-right align-top text-gray-800 font-medium">{formatCurrency(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -308,16 +316,11 @@ const BookingVoucherPrint = ({ booking }) => {
         </div>
 
         {/* Calculations Section */}
-        <div className="flex justify-end mt-4">
-          <div className="w-72 text-[11px] space-y-2 border-b border-gray-200 pb-4">
+        <div className="flex justify-end mt-1">
+          <div className="w-64 text-[10px] space-y-0.5 border-b border-gray-200 pb-1">
             <div className="flex justify-between text-gray-500">
               <span>Sub Total</span>
-              <span className="font-medium text-gray-800">{formatCurrency(subTotalExcludingSST)}</span>
-            </div>
-            
-            <div className="flex justify-between text-gray-500">
-              <span>SST (8%)</span>
-              <span className="font-medium text-gray-800">{formatCurrency(sstAmount)}</span>
+              <span className="font-medium text-gray-800">{formatCurrency(subTotalBeforeDiscountAndSST)}</span>
             </div>
 
             {Number(billing?.discount) > 0 && (
@@ -326,8 +329,13 @@ const BookingVoucherPrint = ({ booking }) => {
                 <span>-{formatCurrency(discountVal)}</span>
               </div>
             )}
+            
+            <div className="flex justify-between text-gray-500">
+              <span>SST (8%)</span>
+              <span className="font-medium text-gray-800">{formatCurrency(sstAmount)}</span>
+            </div>
 
-            <div className="flex justify-between font-bold text-gray-900 border-t border-gray-150 pt-2 text-[12px]">
+            <div className="flex justify-between font-bold text-gray-900 border-t border-gray-150 pt-1 text-[10.5px]">
               <span>Total</span>
               <span>MYR {formatCurrency(finalTotal)}</span>
             </div>
@@ -337,7 +345,7 @@ const BookingVoucherPrint = ({ booking }) => {
               <span className="text-red-600 font-medium">(-) {formatCurrency(billing?.advanceAmountInput || 0)}</span>
             </div>
 
-            <div className="flex justify-between font-bold text-gray-950 bg-gray-100 p-2.5 rounded text-[13px] items-center">
+            <div className="flex justify-between font-bold text-gray-950 bg-gray-100 p-1.5 rounded text-[11.5px] items-center">
               <span>Balance Due</span>
               <span>MYR {formatCurrency(balanceDue)}</span>
             </div>
@@ -345,7 +353,7 @@ const BookingVoucherPrint = ({ booking }) => {
         </div>
 
         {/* Notes, Payment Options & Footer Terms */}
-        <div className="mt-8 text-[10.5px] text-gray-500 space-y-5 leading-normal">
+        <div className="mt-2.5 text-[10px] text-gray-500 space-y-2 leading-normal">
           <div>
             <h4 className="font-bold text-gray-700">Notes</h4>
             <p className="mt-0.5 text-gray-400">Thanks for your business. This is a computer-generated document. No signature is required.</p>
@@ -363,14 +371,14 @@ const BookingVoucherPrint = ({ booking }) => {
           <div>
             <h4 className="font-bold text-gray-700">Terms & Conditions</h4>
             <ol className="list-decimal pl-4 mt-0.5 text-gray-400 space-y-0.5">
-              <li>Charges of 8% SST is included in the above quotation.</li>
+              <li>Charges of 8% SST is not included in the above quotation.</li>
               <li>Packages included accommodation, meals, 2 way boat transfer & boat dives/snorkeling trips.</li>
             </ol>
           </div>
         </div>
 
         {/* Page 1 Footer */}
-        <div className="mt-12 text-center text-[9px] text-gray-400 border-t border-gray-100 pt-3">
+        <div className="mt-3 text-center text-[8.5px] text-gray-400 border-t border-gray-100 pt-2">
           <p>Crafted with ease using <strong className="text-gray-400">Zoho Invoice</strong></p>
           <p className="mt-0.5">Visit zoho.com/invoice to create truly professional invoices</p>
         </div>
@@ -378,7 +386,7 @@ const BookingVoucherPrint = ({ booking }) => {
       </div>
 
       {/* PAGE 2: Full Terms & Conditions Page */}
-      <div className="hidden print:block text-gray-800 bg-white p-8 font-sans max-w-4xl mx-auto print-voucher leading-relaxed" style={{ pageBreakBefore: "always", breakBefore: "page" }}>
+      <div className="hidden print:block text-gray-800 bg-white p-8 font-sans max-w-4xl mx-auto print-voucher leading-relaxed">
         
         <div className="space-y-4 text-[10.5px] text-gray-500 leading-normal">
           <ol className="space-y-2 text-gray-700 list-none pl-0">
